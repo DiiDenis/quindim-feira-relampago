@@ -1,0 +1,31 @@
+# Segredos e configurações locais
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node e Nuxt
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# Testes e ferramentas
+test-results/
+playwright-report/
+*.log
+
+# Editores e sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
