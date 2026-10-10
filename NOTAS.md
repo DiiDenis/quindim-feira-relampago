@@ -89,3 +89,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A primeira checagem de formato do catálogo pediu a compactação de uma compreensão; após o ajuste, a suíte com HTTP real passou com 49 testes.
 - A entrada de reserva passou a rejeitar tipos, vazios, extras e quantidades fora do limite antes de qualquer acesso ao banco.
 - A normalização de SKUs repetidos preservou a primeira posição e impediu somas acima de três; os 67 testes da suíte passaram no Docker.
+- A regra de reserva passou a validar toda a cesta antes de alterar disponibilidade, preservando integralmente o estado quando há SKU inexistente ou estoque insuficiente.
+- A reserva válida registra preços do estado e TTL em UTC, sem desconto; após ajustes de formatação em compreensões, os 71 testes passaram no Docker.
