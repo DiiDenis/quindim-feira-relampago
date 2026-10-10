@@ -18,7 +18,9 @@ Estas são decisões nossas para atender o contrato; não são escolhas aprovada
 - Trocar `geracao` no reset para impedir que uma escrita iniciada antes dele sobrescreva o novo seed, mesmo que o número de versão se repita.
 - Manter `estoque` como capacidade física fixa e variar `disponivel`. Depois de normalizar expirações: `estoque = disponivel + reservas_ativas + pedidos_aguardando_ou_pagos`.
 
-Limitações conhecidas: o documento único concentra contenção, cresce com reservas/pedidos/eventos, custa mais para ler e regravar e está sujeito ao limite BSON de 16 MiB. Consultas podem precisar publicar expirações e incrementar a versão. É uma solução deliberada para a feira pequena e para MongoDB standalone, não uma arquitetura de escala ilimitada.
+Limitações conhecidas: o documento único concentra contenção, cresce com reservas/pedidos/eventos, custa mais para ler e regravar e está sujeito ao limite BSON de 16 MiB. Consultas podem precisar publicar expirações e incrementar a versão. O laço CAS não limita conflitos normais; timeouts de infraestrutura continuam possíveis e são propagados, não tratados como conflito. É uma solução deliberada para a feira pequena e para MongoDB standalone, não uma arquitetura de escala ilimitada.
+
+O CAS atual protege geração e versão. A guarda temporal de expiração no filtro do MongoDB ainda não está implementada e será integrada junto da política de expiração; portanto, esta etapa não resolve sozinha toda a concorrência do domínio.
 
 ### Ambiguidades e critérios adotados
 
@@ -81,3 +83,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - `docker compose up` manteve somente MongoDB e API em execução; o serviço de testes permaneceu fora do ambiente normal.
 - O reset administrativo passou a autenticar o token antes de acessar a feira e a substituir o agregado inteiro, com uma geração nova, em uma única escrita.
 - Testes reais confirmaram respostas 401 e 204 sem corpo, recomposição exata do catálogo e isolamento dos cenários de negócio por reset restrito à rede do Compose.
+- O mecanismo CAS passou a reler estado e hora do MongoDB após conflitos de geração ou versão, descartando o cálculo vencido antes de tentar novamente.
+- Dois candidatos sincronizados contra o MongoDB real partiram da versão zero; um deles releu após perder o CAS, e o agregado terminou corretamente na versão dois.
