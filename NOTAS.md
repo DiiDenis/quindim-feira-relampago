@@ -101,3 +101,9 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A checagem de formato pediu parênteses na asserção longa da invariante; o trecho foi ajustado antes da revisão final.
 - A regra pura de expiração passou a marcar reservas ativas vencidas e devolver todos os seus itens uma única vez, mantendo confirmadas e já expiradas intactas.
 - Testes unitários cobriram antes, igualdade e depois do prazo, repetição e mistura de status; a suíte completa passou com 89 testes.
+- O caminho CAS comum passou a expirar a cópia antes da operação e a exigir no filtro de escrita que a hora do Mongo ainda seja anterior ao menor prazo ativo relevante.
+- O filtro considera reservas ativas do snapshot original e novas reservas candidatas; uma escrita real foi recusada ao cruzar o prazo mesmo sem outro escritor.
+- Erros de negócio agora são adiados quando necessário para persistir uma expiração no mesmo CAS; um 409 real devolveu estoque vencido sem criar a reserva inválida.
+- A primeira regressão elevou a versão em dois erros sem expiração e quebrou a expectativa de estado intacto; o CAS passou a gravar antes do erro somente quando há limpeza ou prazo ativo a proteger.
+- A checagem de formato pediu a compactação de duas expressões; ambas foram ajustadas antes da revisão final.
+- Um teste real confirmou que, ao perder pelo filtro temporal, o CAS relê a hora, expira a reserva e salva na segunda tentativa; a suíte completa passou com 94 testes.
