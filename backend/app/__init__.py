@@ -1,0 +1,1 @@
+"""Aplicação da Feira Relâmpago."""

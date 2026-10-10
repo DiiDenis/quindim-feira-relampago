@@ -50,3 +50,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Foram preparados apenas os arquivos iniciais do projeto; a aplicação ainda não foi implementada.
 - O PDF original foi comparado com o contrato, o plano arquitetural e a matriz de aceite do kit.
 - A IA ajudou a organizar requisitos, decisões e ambiguidades; nenhum código de aplicação ou teste foi produzido nesta etapa.
+- O Python instalado no Windows era 3.14.8; para respeitar o contrato foi usado o Python 3.12.14 do runtime local do Codex.
+- Como `uv` não estava instalado e o motor do Docker não estava ativo, `uv` 0.13.0 foi instalado somente em um ambiente virtual temporário, sem instalação global.
+- O lockfile real foi gerado e sincronizado; imports e ferramentas foram verificados. Ainda não existem testes de negócio.
+- A primeira tentativa de conferir o lock e importar `app` foi executada pela IA na raiz do repositório e falhou por diretório incorreto; os comandos foram repetidos em `backend` e passaram.
