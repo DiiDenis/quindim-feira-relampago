@@ -95,3 +95,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A primeira suíte completa revelou que o teste do seed reutilizava o estado alterado por outro cenário; ele passou a usar o reset de negócio e a repetição terminou com 75 testes aprovados.
 - `GET /v1/reservas/{id}` passou a consultar o mesmo agregado via CAS e a reutilizar o contrato público da criação, sem expor campos internos da reserva.
 - IDs malformados e IDs válidos inexistentes passaram a responder o mesmo erro 404 controlado, sem deixar a conversão de ObjectId escapar como falha interna.
+- Testes HTTP com 20 chamadas simultâneas confirmaram no MongoDB standalone que apenas o estoque disponível é reservado e que cestas perdedoras não descontam outros itens.
+- A disputa por dez unidades foi repetida em três rodadas contra os quatro workers; a suíte completa passou com 83 testes, sem timeout ou resposta 500.
+- A primeira execução do teste concorrente usou por engano o preço 2590 para o QND-005; a expectativa foi corrigida para o valor 12900 do seed e os testes foram repetidos.
+- A checagem de formato pediu parênteses na asserção longa da invariante; o trecho foi ajustado antes da revisão final.
