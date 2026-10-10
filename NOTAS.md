@@ -66,3 +66,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O MongoDB somente deste projeto foi interrompido para confirmar o erro 503 genérico e depois restaurado; Mongo e API voltaram ao estado saudável.
 - A primeira tentativa da IA de agrupar a interrupção e a restauração em um comando foi rejeitada pela política de execução; os passos foram repetidos separadamente.
 - A primeira coleta da suíte completa falhou porque os testes unitário e de integração tinham o mesmo nome de módulo; o arquivo de integração foi renomeado antes da repetição.
+- O catálogo inicial passou a ser criado antes do Gunicorn e foi preservado ao reiniciar somente a API.
+- O seed foi executado repetidamente em um banco isolado; manteve um único documento e não desfez uma alteração controlada. O banco de verificação foi removido ao final.
+- Os testes de seed cobriram o catálogo exato, estruturas independentes, repetição e oito inicializações concorrentes; a suíte no contêiner passou com 21 testes.
+- A primeira checagem de estilo da etapa encontrou uma linha longa; a primeira quebra manual ainda divergiu do formatador e a segunda correção passou.

@@ -19,7 +19,7 @@ COPY app ./app
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--workers", "4", "--worker-class", "sync", "--bind", "0.0.0.0:8000", "app:criar_app()"]
+CMD ["sh", "-c", "python -m app.seed && exec gunicorn --workers 4 --worker-class sync --bind 0.0.0.0:8000 'app:criar_app()'"]
 
 FROM runtime AS testes
 
