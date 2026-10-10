@@ -6,6 +6,7 @@ from flask import Blueprint, Response, current_app, jsonify
 from pydantic import BaseModel
 from pymongo.errors import PyMongoError
 
+from .erros import criar_resposta_erro
 from .mongo import ConexaoMongo
 
 bp = Blueprint("saude", __name__)
@@ -24,17 +25,10 @@ def consultar_saude() -> tuple[Response, int] | Response:
     try:
         conexao.cliente.admin.command("ping")
     except PyMongoError:
-        return (
-            jsonify(
-                {
-                    "erro": {
-                        "codigo": "servico_indisponivel",
-                        "mensagem": "Serviço temporariamente indisponível.",
-                        "detalhes": {},
-                    }
-                }
-            ),
+        return criar_resposta_erro(
             503,
+            "servico_indisponivel",
+            "Serviço temporariamente indisponível.",
         )
 
     resposta = RespostaSaude(status="ok")

@@ -70,3 +70,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O seed foi executado repetidamente em um banco isolado; manteve um único documento e não desfez uma alteração controlada. O banco de verificação foi removido ao final.
 - Os testes de seed cobriram o catálogo exato, estruturas independentes, repetição e oito inicializações concorrentes; a suíte no contêiner passou com 21 testes.
 - A primeira checagem de estilo da etapa encontrou uma linha longa; a primeira quebra manual ainda divergiu do formatador e a segunda correção passou.
+- A API passou a responder erros esperados e inesperados no mesmo envelope JSON; falhas internas mantêm HTTP 500 e detalhes técnicos somente no log.
+- Foram adicionados helpers para IDs ObjectId estritos e datas com fuso normalizadas em UTC/Z sem descartar a fração de segundo.
+- A suíte passou com 33 testes unitários e 36 testes no contêiner; uma chamada real via Gunicorn confirmou 404 JSON para rota inexistente.
+- A primeira checagem de formato pediu reorganização de duas chamadas nos testes; o Ruff aplicou a correção antes da repetição.

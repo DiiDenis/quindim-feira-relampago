@@ -3,6 +3,7 @@
 from flask import Flask
 
 from .config import Configuracao
+from .erros import registrar_handlers_erros
 from .mongo import criar_conexao_mongo
 from .saude import bp as bp_saude
 
@@ -18,6 +19,7 @@ def criar_app(configuracao: Configuracao | None = None) -> Flask:
         WEBHOOK_SEGREDO=configuracao_efetiva.webhook_segredo,
         RESERVA_TTL_SEGUNDOS=configuracao_efetiva.reserva_ttl_segundos,
     )
+    registrar_handlers_erros(app)
     app.extensions["mongo"] = criar_conexao_mongo(
         configuracao_efetiva.mongo_uri,
         configuracao_efetiva.mongo_banco,
