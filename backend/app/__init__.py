@@ -5,6 +5,7 @@ from flask import Flask
 from .admin import bp as bp_admin
 from .config import Configuracao
 from .erros import registrar_handlers_erros
+from .livros import bp as bp_livros
 from .mongo import criar_conexao_mongo
 from .saude import bp as bp_saude
 
@@ -26,5 +27,6 @@ def criar_app(configuracao: Configuracao | None = None) -> Flask:
         configuracao_efetiva.mongo_banco,
     )
     app.register_blueprint(bp_admin)
+    app.register_blueprint(bp_livros)
     app.register_blueprint(bp_saude)
     return app

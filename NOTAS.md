@@ -85,3 +85,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Testes reais confirmaram respostas 401 e 204 sem corpo, recomposição exata do catálogo e isolamento dos cenários de negócio por reset restrito à rede do Compose.
 - O mecanismo CAS passou a reler estado e hora do MongoDB após conflitos de geração ou versão, descartando o cálculo vencido antes de tentar novamente.
 - Dois candidatos sincronizados contra o MongoDB real partiram da versão zero; um deles releu após perder o CAS, e o agregado terminou corretamente na versão dois.
+- `GET /v1/livros` passou a publicar somente o DTO validado dos cinco livros, usando o caminho CAS que receberá a normalização de expiração.
+- A primeira checagem de formato do catálogo pediu a compactação de uma compreensão; após o ajuste, a suíte com HTTP real passou com 49 testes.
