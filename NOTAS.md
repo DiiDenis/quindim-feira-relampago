@@ -87,3 +87,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Dois candidatos sincronizados contra o MongoDB real partiram da versão zero; um deles releu após perder o CAS, e o agregado terminou corretamente na versão dois.
 - `GET /v1/livros` passou a publicar somente o DTO validado dos cinco livros, usando o caminho CAS que receberá a normalização de expiração.
 - A primeira checagem de formato do catálogo pediu a compactação de uma compreensão; após o ajuste, a suíte com HTTP real passou com 49 testes.
+- A entrada de reserva passou a rejeitar tipos, vazios, extras e quantidades fora do limite antes de qualquer acesso ao banco.
+- A normalização de SKUs repetidos preservou a primeira posição e impediu somas acima de três; os 67 testes da suíte passaram no Docker.
