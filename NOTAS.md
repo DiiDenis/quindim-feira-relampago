@@ -107,3 +107,6 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A primeira regressão elevou a versão em dois erros sem expiração e quebrou a expectativa de estado intacto; o CAS passou a gravar antes do erro somente quando há limpeza ou prazo ativo a proteger.
 - A checagem de formato pediu a compactação de duas expressões; ambas foram ajustadas antes da revisão final.
 - Um teste real confirmou que, ao perder pelo filtro temporal, o CAS relê a hora, expira a reserva e salva na segunda tentativa; a suíte completa passou com 94 testes.
+- Testes HTTP reais confirmaram que consultas simultâneas devolvem o estoque vencido uma única vez e que somente uma nova reserva vence a disputa pela unidade liberada.
+- A API foi recriada isoladamente com TTL de dois segundos; a reserva atravessou o relógio real, expirou sob demanda e a API foi restaurada ao padrão de 900 segundos.
+- A primeira execução do TTL curto iniciou o runner apenas com o Compose padrão, que recriou a API com 900 segundos; a configuração curta foi aplicada também ao runner e o cenário passou na repetição.
