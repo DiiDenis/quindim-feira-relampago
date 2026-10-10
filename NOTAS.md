@@ -99,3 +99,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A disputa por dez unidades foi repetida em três rodadas contra os quatro workers; a suíte completa passou com 83 testes, sem timeout ou resposta 500.
 - A primeira execução do teste concorrente usou por engano o preço 2590 para o QND-005; a expectativa foi corrigida para o valor 12900 do seed e os testes foram repetidos.
 - A checagem de formato pediu parênteses na asserção longa da invariante; o trecho foi ajustado antes da revisão final.
+- A regra pura de expiração passou a marcar reservas ativas vencidas e devolver todos os seus itens uma única vez, mantendo confirmadas e já expiradas intactas.
+- Testes unitários cobriram antes, igualdade e depois do prazo, repetição e mistura de status; a suíte completa passou com 89 testes.
