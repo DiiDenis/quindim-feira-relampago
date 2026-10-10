@@ -56,3 +56,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A primeira tentativa de conferir o lock e importar `app` foi executada pela IA na raiz do repositório e falhou por diretório incorreto; os comandos foram repetidos em `backend` e passaram.
 - Na primeira coleta dos testes da factory, o `pytest.exe` no Windows não encontrou o pacote `app`; a raiz de `backend` foi declarada no `pythonpath` do pytest e a suíte foi repetida.
 - A factory Flask e a configuração foram verificadas por 15 testes unitários; importar `app` sem variáveis de ambiente não iniciou servidor nem tentou acessar MongoDB.
+- O Compose foi validado e subiu MongoDB 8.3.11 standalone, sem porta no host, e a API com Gunicorn 23.0.0 e quatro workers síncronos.
+- O target Docker de testes foi construído separadamente e os 15 testes unitários passaram também no contêiner Linux com Python 3.12.

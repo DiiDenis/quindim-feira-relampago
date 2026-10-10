@@ -1,0 +1,27 @@
+services:
+  mongo:
+    image: mongo:8
+    volumes:
+      - mongo_dados:/data/db
+    healthcheck:
+      test:
+        ["CMD", "mongosh", "--quiet", "--eval", "quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  api:
+    build:
+      context: ./backend
+      target: runtime
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  mongo_dados:
