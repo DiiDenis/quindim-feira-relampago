@@ -1,11 +1,25 @@
 """Entrada e regras de negócio de reservas."""
 
 from datetime import UTC, datetime, timedelta
-from typing import Any, Self
+from typing import Any, Literal, Self, cast
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from bson import ObjectId
+from flask import Blueprint, Response, current_app, jsonify, request
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
-from .erros import ErroNegocio
+from .banco import executar_com_cas
+from .erros import ErroNegocio, validar_entrada
+from .formatos import serializar_data_utc
+from .mongo import ConexaoMongo
+
+bp = Blueprint("reservas", __name__, url_prefix="/v1")
 
 
 class ItemReservaEntrada(BaseModel):
@@ -69,6 +83,33 @@ class ReservaEntrada(BaseModel):
         return self
 
 
+class ItemReservaSaida(BaseModel):
+    """Item da reserva no contrato público."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    sku: str
+    quantidade: int
+    preco_centavos: int
+
+
+class ReservaSaida(BaseModel):
+    """Reserva serializada sem campos internos do agregado."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    id: str
+    cliente_id: str
+    status: Literal["ativa", "confirmada", "expirada"]
+    itens: list[ItemReservaSaida]
+    criado_em: datetime
+    expira_em: datetime
+
+    @field_serializer("criado_em", "expira_em")
+    def serializar_datas(self, valor: datetime) -> str:
+        return serializar_data_utc(valor)
+
+
 def validar_e_normalizar_entrada_reserva(dados: Any) -> ReservaEntrada:
     """Valida o corpo e devolve SKUs consolidados para a futura regra de domínio."""
     return ReservaEntrada.model_validate(dados)
@@ -129,3 +170,47 @@ def reservar_itens(
     }
     estado["reservas"].append(reserva)
     return reserva
+
+
+def criar_resposta_reserva(reserva: dict[str, Any]) -> ReservaSaida:
+    """Seleciona e valida somente os campos públicos da reserva."""
+    return ReservaSaida.model_validate(
+        {
+            "id": reserva["id"],
+            "cliente_id": reserva["cliente_id"],
+            "status": reserva["status"],
+            "itens": [
+                {
+                    "sku": item["sku"],
+                    "quantidade": item["quantidade"],
+                    "preco_centavos": item["preco_centavos"],
+                }
+                for item in reserva["itens"]
+            ],
+            "criado_em": reserva["criado_em"],
+            "expira_em": reserva["expira_em"],
+        }
+    )
+
+
+@bp.post("/reservas")
+def criar_reserva() -> tuple[Response, int]:
+    """Valida e publica uma reserva somente depois da escrita CAS vencer."""
+    entrada = validar_entrada(ReservaEntrada, request.get_json())
+    id_reserva = str(ObjectId())
+    conexao = cast(ConexaoMongo, current_app.extensions["mongo"])
+    ttl_segundos = cast(int, current_app.config["RESERVA_TTL_SEGUNDOS"])
+
+    def executar(estado: dict[str, Any], agora: datetime) -> ReservaSaida:
+        return criar_resposta_reserva(
+            reservar_itens(
+                estado,
+                entrada,
+                id_reserva,
+                agora,
+                ttl_segundos,
+            )
+        )
+
+    resposta = executar_com_cas(conexao.banco, executar)
+    return jsonify(resposta.model_dump(mode="json")), 201

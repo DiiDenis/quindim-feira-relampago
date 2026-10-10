@@ -91,3 +91,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A normalização de SKUs repetidos preservou a primeira posição e impediu somas acima de três; os 67 testes da suíte passaram no Docker.
 - A regra de reserva passou a validar toda a cesta antes de alterar disponibilidade, preservando integralmente o estado quando há SKU inexistente ou estoque insuficiente.
 - A reserva válida registra preços do estado e TTL em UTC, sem desconto; após ajustes de formatação em compreensões, os 71 testes passaram no Docker.
+- `POST /v1/reservas` passou a validar a entrada, criar um ID, reservar a cesta inteira via CAS e responder 201 somente depois de persistir o novo estado no MongoDB.
+- A primeira suíte completa revelou que o teste do seed reutilizava o estado alterado por outro cenário; ele passou a usar o reset de negócio e a repetição terminou com 75 testes aprovados.

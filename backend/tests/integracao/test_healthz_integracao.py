@@ -13,6 +13,7 @@ def test_healthz_confirma_api_e_mongo_reais(cliente_http: httpx.Client) -> None:
     assert resposta.json() == {"status": "ok"}
 
 
+@pytest.mark.negocio
 def test_seed_real_esta_persistido(documento_feira: dict[str, Any]) -> None:
     livros = documento_feira["livros"]
 
