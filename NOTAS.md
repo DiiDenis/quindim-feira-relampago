@@ -79,3 +79,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - URLs deliberadamente inválidas produziram erros explícitos de API e Mongo, sem transformar ausência de serviço em teste pulado.
 - O primeiro runner reutilizou uma imagem Compose antiga e não encontrou os testes; `pull_policy: build` foi adicionado e a repetição reconstruiu a imagem correta.
 - `docker compose up` manteve somente MongoDB e API em execução; o serviço de testes permaneceu fora do ambiente normal.
+- O reset administrativo passou a autenticar o token antes de acessar a feira e a substituir o agregado inteiro, com uma geração nova, em uma única escrita.
+- Testes reais confirmaram respostas 401 e 204 sem corpo, recomposição exata do catálogo e isolamento dos cenários de negócio por reset restrito à rede do Compose.

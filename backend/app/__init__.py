@@ -2,6 +2,7 @@
 
 from flask import Flask
 
+from .admin import bp as bp_admin
 from .config import Configuracao
 from .erros import registrar_handlers_erros
 from .mongo import criar_conexao_mongo
@@ -24,5 +25,6 @@ def criar_app(configuracao: Configuracao | None = None) -> Flask:
         configuracao_efetiva.mongo_uri,
         configuracao_efetiva.mongo_banco,
     )
+    app.register_blueprint(bp_admin)
     app.register_blueprint(bp_saude)
     return app
