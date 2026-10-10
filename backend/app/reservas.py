@@ -16,7 +16,7 @@ from pydantic import (
 
 from .banco import executar_com_cas
 from .erros import ErroNegocio, validar_entrada
-from .formatos import serializar_data_utc
+from .formatos import interpretar_id_recurso, serializar_data_utc
 from .mongo import ConexaoMongo
 
 bp = Blueprint("reservas", __name__, url_prefix="/v1")
@@ -193,6 +193,21 @@ def criar_resposta_reserva(reserva: dict[str, Any]) -> ReservaSaida:
     )
 
 
+def encontrar_reserva(estado: dict[str, Any], id_reserva: str) -> dict[str, Any]:
+    """Encontra uma reserva pelo ID público ou responde como recurso inexistente."""
+    reserva = next(
+        (reserva for reserva in estado["reservas"] if reserva["id"] == id_reserva),
+        None,
+    )
+    if reserva is None:
+        raise ErroNegocio(
+            404,
+            "nao_encontrado",
+            "Recurso não encontrado.",
+        )
+    return reserva
+
+
 @bp.post("/reservas")
 def criar_reserva() -> tuple[Response, int]:
     """Valida e publica uma reserva somente depois da escrita CAS vencer."""
@@ -214,3 +229,16 @@ def criar_reserva() -> tuple[Response, int]:
 
     resposta = executar_com_cas(conexao.banco, executar)
     return jsonify(resposta.model_dump(mode="json")), 201
+
+
+@bp.get("/reservas/<id_reserva>")
+def consultar_reserva(id_reserva: str) -> tuple[Response, int]:
+    """Publica uma reserva pelo mesmo caminho de estado usado nas mutações."""
+    id_normalizado = str(interpretar_id_recurso(id_reserva))
+    conexao = cast(ConexaoMongo, current_app.extensions["mongo"])
+
+    def executar(estado: dict[str, Any], _agora: datetime) -> ReservaSaida:
+        return criar_resposta_reserva(encontrar_reserva(estado, id_normalizado))
+
+    resposta = executar_com_cas(conexao.banco, executar)
+    return jsonify(resposta.model_dump(mode="json")), 200

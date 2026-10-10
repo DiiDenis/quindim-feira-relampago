@@ -93,3 +93,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A reserva válida registra preços do estado e TTL em UTC, sem desconto; após ajustes de formatação em compreensões, os 71 testes passaram no Docker.
 - `POST /v1/reservas` passou a validar a entrada, criar um ID, reservar a cesta inteira via CAS e responder 201 somente depois de persistir o novo estado no MongoDB.
 - A primeira suíte completa revelou que o teste do seed reutilizava o estado alterado por outro cenário; ele passou a usar o reset de negócio e a repetição terminou com 75 testes aprovados.
+- `GET /v1/reservas/{id}` passou a consultar o mesmo agregado via CAS e a reutilizar o contrato público da criação, sem expor campos internos da reserva.
+- IDs malformados e IDs válidos inexistentes passaram a responder o mesmo erro 404 controlado, sem deixar a conversão de ObjectId escapar como falha interna.
