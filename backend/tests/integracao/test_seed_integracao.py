@@ -1,30 +1,23 @@
-import os
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
 import pytest
 
-from app.mongo import criar_conexao_mongo
+from app.mongo import ConexaoMongo
 from app.seed import aplicar_seed
 
-pytestmark = [
-    pytest.mark.integracao,
-    pytest.mark.skipif(
-        os.environ.get("EXECUTAR_TESTES_INTEGRACAO") != "1",
-        reason="requer MongoDB real e EXECUTAR_TESTES_INTEGRACAO=1",
-    ),
-]
+pytestmark = pytest.mark.integracao
 
 
-def test_seed_repetido_preserva_estado_existente() -> None:
+def test_seed_repetido_preserva_estado_existente(conexao_mongo: ConexaoMongo) -> None:
     nome_banco = f"quindim_teste_seed_{uuid4().hex}"
-    conexao = criar_conexao_mongo(os.environ["MONGO_URI"], nome_banco)
-    feiras = conexao.banco["feiras"]
+    banco = conexao_mongo.cliente[nome_banco]
+    feiras = banco["feiras"]
 
     try:
-        assert aplicar_seed(conexao.banco) is True
+        assert aplicar_seed(banco) is True
         estado_original = feiras.find_one({"_id": "principal"})
-        assert aplicar_seed(conexao.banco) is False
+        assert aplicar_seed(banco) is False
         assert feiras.count_documents({}) == 1
 
         resultado = feiras.update_one(
@@ -32,7 +25,7 @@ def test_seed_repetido_preserva_estado_existente() -> None:
             {"$set": {"livros.0.disponivel": 7}},
         )
         assert resultado.modified_count == 1
-        assert aplicar_seed(conexao.banco) is False
+        assert aplicar_seed(banco) is False
 
         estado_preservado = feiras.find_one({"_id": "principal"})
         assert estado_original is not None
@@ -49,21 +42,19 @@ def test_seed_repetido_preserva_estado_existente() -> None:
             ("A Lua no Bolso — edição numerada", 12900),
         ]
     finally:
-        conexao.cliente.drop_database(nome_banco)
-        conexao.cliente.close()
+        conexao_mongo.cliente.drop_database(nome_banco)
 
 
-def test_seed_concorrente_cria_um_unico_documento() -> None:
+def test_seed_concorrente_cria_um_unico_documento(conexao_mongo: ConexaoMongo) -> None:
     nome_banco = f"quindim_teste_seed_corrida_{uuid4().hex}"
-    conexao = criar_conexao_mongo(os.environ["MONGO_URI"], nome_banco)
+    banco = conexao_mongo.cliente[nome_banco]
 
     try:
         with ThreadPoolExecutor(max_workers=8) as executor:
-            resultados = list(executor.map(lambda _: aplicar_seed(conexao.banco), range(8)))
+            resultados = list(executor.map(lambda _: aplicar_seed(banco), range(8)))
 
         assert resultados.count(True) == 1
         assert resultados.count(False) == 7
-        assert conexao.banco["feiras"].count_documents({}) == 1
+        assert banco["feiras"].count_documents({}) == 1
     finally:
-        conexao.cliente.drop_database(nome_banco)
-        conexao.cliente.close()
+        conexao_mongo.cliente.drop_database(nome_banco)

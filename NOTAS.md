@@ -74,3 +74,8 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Foram adicionados helpers para IDs ObjectId estritos e datas com fuso normalizadas em UTC/Z sem descartar a fração de segundo.
 - A suíte passou com 33 testes unitários e 36 testes no contêiner; uma chamada real via Gunicorn confirmou 404 JSON para rota inexistente.
 - A primeira checagem de formato pediu reorganização de duas chamadas nos testes; o Ruff aplicou a correção antes da repetição.
+- O profile de teste passou a executar pytest contra `api` e `mongo` pelos nomes da rede Compose, com fixtures HTTP, Mongo e token administrativo vindo do ambiente.
+- `docker compose run --rm testes` passou com 33 verificações unitárias e quatro de integração; saúde e seed foram conferidos através da API/Gunicorn e do MongoDB reais.
+- URLs deliberadamente inválidas produziram erros explícitos de API e Mongo, sem transformar ausência de serviço em teste pulado.
+- O primeiro runner reutilizou uma imagem Compose antiga e não encontrou os testes; `pull_policy: build` foi adicionado e a repetição reconstruiu a imagem correta.
+- `docker compose up` manteve somente MongoDB e API em execução; o serviço de testes permaneceu fora do ambiente normal.
