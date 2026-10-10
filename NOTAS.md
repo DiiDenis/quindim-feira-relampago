@@ -54,3 +54,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Como `uv` não estava instalado e o motor do Docker não estava ativo, `uv` 0.13.0 foi instalado somente em um ambiente virtual temporário, sem instalação global.
 - O lockfile real foi gerado e sincronizado; imports e ferramentas foram verificados. Ainda não existem testes de negócio.
 - A primeira tentativa de conferir o lock e importar `app` foi executada pela IA na raiz do repositório e falhou por diretório incorreto; os comandos foram repetidos em `backend` e passaram.
+- Na primeira coleta dos testes da factory, o `pytest.exe` no Windows não encontrou o pacote `app`; a raiz de `backend` foi declarada no `pythonpath` do pytest e a suíte foi repetida.
+- A factory Flask e a configuração foram verificadas por 15 testes unitários; importar `app` sem variáveis de ambiente não iniciou servidor nem tentou acessar MongoDB.
