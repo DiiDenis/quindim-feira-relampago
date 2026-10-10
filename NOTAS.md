@@ -58,3 +58,11 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A factory Flask e a configuração foram verificadas por 15 testes unitários; importar `app` sem variáveis de ambiente não iniciou servidor nem tentou acessar MongoDB.
 - O Compose foi validado e subiu MongoDB 8.3.11 standalone, sem porta no host, e a API com Gunicorn 23.0.0 e quatro workers síncronos.
 - O target Docker de testes foi construído separadamente e os 15 testes unitários passaram também no contêiner Linux com Python 3.12.
+
+### 10/10/2026
+
+- A aplicação passou a criar um cliente PyMongo por instância Flask, sem conexão antecipada, com timeout finito e leitura de datas em UTC.
+- O endpoint `/healthz` foi verificado por HTTP contra o MongoDB real; os 16 testes unitários e o teste de integração passaram.
+- O MongoDB somente deste projeto foi interrompido para confirmar o erro 503 genérico e depois restaurado; Mongo e API voltaram ao estado saudável.
+- A primeira tentativa da IA de agrupar a interrupção e a restauração em um comando foi rejeitada pela política de execução; os passos foram repetidos separadamente.
+- A primeira coleta da suíte completa falhou porque os testes unitário e de integração tinham o mesmo nome de módulo; o arquivo de integração foi renomeado antes da repetição.

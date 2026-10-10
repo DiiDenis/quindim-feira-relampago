@@ -3,10 +3,12 @@
 from flask import Flask
 
 from .config import Configuracao
+from .mongo import criar_conexao_mongo
+from .saude import bp as bp_saude
 
 
 def criar_app(configuracao: Configuracao | None = None) -> Flask:
-    """Cria uma instância Flask sem iniciar servidor ou conexão com banco."""
+    """Cria a aplicação e seu cliente MongoDB, sem abrir conexão antecipada."""
     configuracao_efetiva = configuracao or Configuracao.do_ambiente()
     app = Flask(__name__)
     app.config.from_mapping(
@@ -16,4 +18,9 @@ def criar_app(configuracao: Configuracao | None = None) -> Flask:
         WEBHOOK_SEGREDO=configuracao_efetiva.webhook_segredo,
         RESERVA_TTL_SEGUNDOS=configuracao_efetiva.reserva_ttl_segundos,
     )
+    app.extensions["mongo"] = criar_conexao_mongo(
+        configuracao_efetiva.mongo_uri,
+        configuracao_efetiva.mongo_banco,
+    )
+    app.register_blueprint(bp_saude)
     return app
