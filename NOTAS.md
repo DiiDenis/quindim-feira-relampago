@@ -117,3 +117,4 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A primeira checagem de estilo dos pedidos encontrou uma asserção longa e a seguinte pediu a compactação de uma compreensão; os dois pontos foram ajustados antes da revisão.
 - A confirmação de domínio passou a criar e vincular o pedido uma única vez, devolver o mesmo pedido nas repetições e preservar o estoque já retido; a suíte completa passou com 150 testes.
 - A checagem de formato pediu a compactação de um dicionário no teste de confirmação; o trecho foi ajustado antes da revisão final.
+- O endpoint de confirmação passou a publicar a transição pelo CAS: cria com 201, repete com 200, rejeita corpo e persiste a liberação antes do erro 410; a suíte completa passou com 155 testes.

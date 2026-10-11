@@ -1,14 +1,20 @@
 """Composição e contrato público dos pedidos."""
 
 from datetime import UTC, datetime
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, cast
 
+from bson import ObjectId
+from flask import Blueprint, Response, current_app, jsonify, request
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 
+from .banco import executar_com_cas
 from .dinheiro import calcular_desconto, ratear_desconto
 from .erros import ErroNegocio
-from .formatos import serializar_data_utc
+from .formatos import interpretar_id_recurso, serializar_data_utc
+from .mongo import ConexaoMongo
 from .reservas import encontrar_reserva
+
+bp = Blueprint("pedidos", __name__, url_prefix="/v1")
 
 
 class LinhaPedidoSaida(BaseModel):
@@ -177,3 +183,30 @@ def confirmar_reserva(
     reserva["status"] = "confirmada"
     reserva["pedido_id"] = pedido["id"]
     return pedido, True
+
+
+@bp.post("/reservas/<id_reserva>/confirmar")
+def publicar_confirmacao(id_reserva: str) -> tuple[Response, int]:
+    """Confirma uma reserva via CAS e diferencia criação de repetição."""
+    id_normalizado = str(interpretar_id_recurso(id_reserva))
+    if request.get_data(cache=True):
+        raise ErroNegocio(
+            400,
+            "requisicao_invalida",
+            "A confirmação não aceita corpo.",
+        )
+
+    id_novo_pedido = str(ObjectId())
+    conexao = cast(ConexaoMongo, current_app.extensions["mongo"])
+
+    def executar(estado: dict[str, Any], agora: datetime) -> tuple[PedidoSaida, bool]:
+        pedido, criado = confirmar_reserva(
+            estado,
+            id_normalizado,
+            id_novo_pedido,
+            agora,
+        )
+        return criar_resposta_pedido(pedido), criado
+
+    resposta, criado = executar_com_cas(conexao.banco, executar)
+    return jsonify(resposta.model_dump(mode="json")), 201 if criado else 200

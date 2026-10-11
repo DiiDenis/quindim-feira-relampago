@@ -7,6 +7,7 @@ from .config import Configuracao
 from .erros import registrar_handlers_erros
 from .livros import bp as bp_livros
 from .mongo import criar_conexao_mongo
+from .pedidos import bp as bp_pedidos
 from .reservas import bp as bp_reservas
 from .saude import bp as bp_saude
 
@@ -29,6 +30,7 @@ def criar_app(configuracao: Configuracao | None = None) -> Flask:
     )
     app.register_blueprint(bp_admin)
     app.register_blueprint(bp_livros)
+    app.register_blueprint(bp_pedidos)
     app.register_blueprint(bp_reservas)
     app.register_blueprint(bp_saude)
     return app
