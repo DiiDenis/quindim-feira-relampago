@@ -156,3 +156,6 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Chamadas HTTP reais pelo Nuxt preservaram os status 200, 201, 400 e 404 e seus JSONs. Com a API interrompida, o BFF respondeu 502 genérico sem URL interna ou stack; a API foi religada e voltou saudável.
 - A primeira checagem de tipos do BFF encontrou o corpo `unknown` incompatível com o tipo aceito pelo `ofetch`. O corpo JSON foi tipado como objeto sem acrescentar validação de negócio, e typecheck e build passaram na repetição.
 - O HTML público não expôs a URL interna nem o token administrativo. Depois da mudança, a suíte completa do backend continuou com 227 testes aprovados.
+- O catálogo passou a ser buscado por `useFetch('/api/livros')` durante o SSR e renderizado com tipos públicos mínimos. O HTML inicial retornado pelo Nuxt continha os cinco títulos e os cinco preços, sem endereço do Flask.
+- A apresentação de moeda converte centavos inteiros seguros para `BigInt`, separa reais e centavos por divisão e resto inteiros e aplica agrupamento `pt-BR`; testes cobriram 3990, 1995, 12900, zero e entradas inseguras.
+- A primeira checagem de tipos dos testes não encontrou as declarações de `node:test` e `node:assert`; `@types/node` foi adicionado como dependência de desenvolvimento e teste, typecheck e build passaram na repetição.
