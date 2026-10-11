@@ -2,15 +2,15 @@
 
 Projeto da avaliação técnica do Clube Quindim para reserva de estoque e pedidos.
 
-A aplicação será construída em etapas pequenas, com testes e revisão antes de cada commit. As instruções para executar e testar o projeto serão acrescentadas conforme a implementação avançar.
+O backend expõe a API Flask na porta 8000 e usa MongoDB 8 standalone. Nesta etapa, o frontend ainda não faz parte do ambiente.
 
-## Testes
+## Executar e testar o backend
 
-Com `.env` criado a partir de `.env.example`, suba o ambiente e execute a suíte unitária e de integração:
+Crie `.env` a partir de `.env.example` e execute:
 
 ```bash
 docker compose up -d --build
 docker compose run --rm testes
 ```
 
-O serviço `testes` pertence ao profile de teste e não é iniciado por `docker compose up`.
+O primeiro comando sobe MongoDB e API. O segundo executa os testes unitários e de integração; o serviço `testes` não permanece em execução. A saúde da API fica disponível em `http://localhost:8000/healthz`.

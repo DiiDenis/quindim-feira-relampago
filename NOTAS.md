@@ -18,7 +18,7 @@ Estas são decisões nossas para atender o contrato; não são escolhas aprovada
 - Trocar `geracao` no reset para impedir que uma escrita iniciada antes dele sobrescreva o novo seed, mesmo que o número de versão se repita.
 - Manter `estoque` como capacidade física fixa e variar `disponivel`. Depois de normalizar expirações: `estoque = disponivel + reservas_ativas + pedidos_aguardando_ou_pagos`.
 
-Limitações conhecidas: o documento único concentra contenção, cresce com reservas/pedidos/eventos, custa mais para ler e regravar e está sujeito ao limite BSON de 16 MiB. Consultas podem precisar publicar expirações e incrementar a versão. O laço CAS não limita conflitos normais; timeouts de infraestrutura continuam possíveis e são propagados, não tratados como conflito. É uma solução deliberada para a feira pequena e para MongoDB standalone, não uma arquitetura de escala ilimitada.
+Limitações conhecidas: o documento único concentra contenção, cresce com reservas/pedidos/eventos, custa mais para ler e regravar e está sujeito ao limite BSON de 16 MiB. Consultas podem precisar publicar expirações e incrementar a versão. O laço CAS não limita conflitos normais; timeouts de infraestrutura continuam possíveis e são propagados, não tratados como conflito. Os cenários concorrentes são finitos e não equivalem a benchmark, teste de carga ou prova de todas as intercalações possíveis. É uma solução deliberada para a feira pequena e para MongoDB standalone, não uma arquitetura de escala ilimitada.
 
 O CAS protege geração e versão e também inclui no filtro do MongoDB a fronteira temporal relevante para cada operação. Essa proteção cobre as disputas modeladas e testadas neste projeto, mas não substitui teste de carga nem demonstra escalabilidade ilimitada.
 
@@ -143,3 +143,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Uma reserva confirmada e seu pedido foram consultados antes e depois de reiniciar somente a API; as respostas permaneceram idênticas, o contêiner do MongoDB não mudou e o Gunicorn voltou com quatro workers.
 - O reset administrativo foi aplicado ao final da verificação de reinício. Esse cenário comprova persistência entre processos da API, mas não é teste de queda do host, durabilidade física nem teste de carga.
 - Após a auditoria, a suíte completa passou com 227 testes; Ruff e a verificação de formatação passaram nos 49 arquivos Python.
+- No checkpoint do backend, os targets `api` e `testes` foram reconstruídos sem cache; o ambiente executou Python 3.12.15, MongoDB 8.3.11 standalone sem `setName` e Gunicorn com um processo mestre e quatro workers.
+- Os 36 testes unitários de dinheiro e os 69 testes de integração HTTP passaram separadamente, incluindo concorrência de reservas, confirmações, pagamentos e expiração.
+- Uma execução isolada com TTL de dois segundos expirou e liberou uma reserva pelo relógio real; a API foi recriada depois com o padrão de 900 segundos, confirmado pelo mesmo teste.
+- Os comandos documentados no README foram repetidos no checkpoint, e a suíte completa terminou com 227 testes aprovados.
