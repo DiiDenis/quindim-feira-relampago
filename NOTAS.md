@@ -120,3 +120,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O endpoint de confirmação passou a publicar a transição pelo CAS: cria com 201, repete com 200, rejeita corpo e persiste a liberação antes do erro 410; a suíte completa passou com 155 testes.
 - A consulta de pedido passou a reutilizar o mesmo DTO validado da confirmação, preservando linhas, centavos, datas e ocultando campos internos; a suíte completa passou com 158 testes.
 - A primeira checagem de formato da consulta pediu a compactação de uma chamada HTTP; o ajuste foi aplicado antes da revisão.
+- Vinte confirmações HTTP simultâneas contra quatro workers produziram um único pedido: uma resposta 201 e dezenove respostas 200 com o mesmo conteúdo; a suíte completa passou com 164 testes.
+- Testes de fronteira confirmaram que uma tentativa iniciada antes do prazo não é publicada após vencê-lo e que a corrida com uma leitura termina somente em confirmação integral ou expiração integral.
+- A primeira execução dos novos testes usou `Counter.update` com dicionários não hashable e consultou o nome errado do status em `ErroNegocio`; as duas verificações do teste foram corrigidas e os cenários passaram na repetição.
+- A checagem de formato pediu a compactação da equação de invariante; o Ruff aplicou o ajuste antes da verificação final.
