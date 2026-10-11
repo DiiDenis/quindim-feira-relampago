@@ -111,3 +111,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A API foi recriada isoladamente com TTL de dois segundos; a reserva atravessou o relógio real, expirou sob demanda e a API foi restaurada ao padrão de 900 segundos.
 - A primeira execução do TTL curto iniciou o runner apenas com o Compose padrão, que recriou a API com 900 segundos; a configuração curta foi aplicada também ao runner e o cenário passou na repetição.
 - O desconto progressivo passou a ser calculado apenas com centavos e percentuais inteiros, incluindo arredondamento comercial e validação de valores internos impossíveis; a suíte completa passou com 118 testes.
+- O desconto total passou a ser rateado proporcionalmente pelos maiores restos, com desempate pela ordem original; a suíte completa passou com 135 testes.
+- A primeira checagem do rateio encontrou uma asserção longa e a segunda pediu a compactação do gerador; o trecho foi ajustado até lint e formato passarem juntos.
