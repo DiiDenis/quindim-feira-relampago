@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type {
   Livro,
+  Pedido,
   Reserva,
   RespostaErro,
   RespostaLivros,
@@ -26,8 +27,11 @@ const livros = computed(() => respostaCatalogo.value?.livros ?? [])
 const clienteId = ref('cli_demo')
 const quantidades = reactive<Record<string, number>>({})
 const reserva = ref<Reserva | null>(null)
+const pedido = ref<Pedido | null>(null)
 const enviandoReserva = ref(false)
 const consultandoReserva = ref(false)
+const confirmandoReserva = ref(false)
+const atualizandoPedido = ref(false)
 const mensagemErro = ref('')
 const instanteAtualMs = ref<number | null>(null)
 let paginaMontada = false
@@ -72,6 +76,11 @@ const contadorReserva = computed(() => {
     ? '--:--'
     : formatarDuracao(segundosRestantes.value)
 })
+
+const podeConfirmar = computed(() => (
+  reserva.value?.status === 'ativa'
+  && !confirmandoReserva.value
+))
 
 function maximoSelecionavel(livro: Livro): number {
   return Math.min(3, livro.disponivel)
@@ -199,6 +208,7 @@ async function criarReserva(): Promise<void> {
 
   enviandoReserva.value = true
   mensagemErro.value = ''
+  pedido.value = null
 
   try {
     reserva.value = await $fetch<Reserva>('/api/reservas', {
@@ -227,6 +237,75 @@ async function criarReserva(): Promise<void> {
   }
   finally {
     enviandoReserva.value = false
+  }
+}
+
+async function atualizarReservaPeloServidor(idReserva: string): Promise<void> {
+  reserva.value = await $fetch<Reserva>(
+    `/api/reservas/${encodeURIComponent(idReserva)}`,
+    { retry: 0 },
+  )
+  await atualizarCatalogo()
+  ajustarQuantidadesAoCatalogo()
+}
+
+async function confirmarReserva(): Promise<void> {
+  if (!podeConfirmar.value || reserva.value === null) {
+    return
+  }
+
+  const idReserva = reserva.value.id
+  confirmandoReserva.value = true
+  mensagemErro.value = ''
+
+  try {
+    pedido.value = await $fetch<Pedido>(
+      `/api/reservas/${encodeURIComponent(idReserva)}/confirmar`,
+      {
+        method: 'POST',
+        retry: 0,
+      },
+    )
+    await atualizarReservaPeloServidor(idReserva)
+  }
+  catch (erro: unknown) {
+    const erroApi = lerErroApi(erro)
+
+    if (erroApi.status === 410) {
+      await atualizarReservaPeloServidor(idReserva)
+      mensagemErro.value = 'A reserva expirou antes da confirmação. O estoque foi atualizado.'
+    }
+    else {
+      mensagemErro.value = erroApi.resposta?.erro.mensagem
+        ?? 'Não foi possível confirmar a reserva.'
+    }
+  }
+  finally {
+    confirmandoReserva.value = false
+  }
+}
+
+async function atualizarStatusPedido(): Promise<void> {
+  if (pedido.value === null || atualizandoPedido.value) {
+    return
+  }
+
+  atualizandoPedido.value = true
+  mensagemErro.value = ''
+
+  try {
+    pedido.value = await $fetch<Pedido>(
+      `/api/pedidos/${encodeURIComponent(pedido.value.id)}`,
+      { retry: 0 },
+    )
+  }
+  catch (erro: unknown) {
+    const erroApi = lerErroApi(erro)
+    mensagemErro.value = erroApi.resposta?.erro.mensagem
+      ?? 'Não foi possível atualizar o pedido.'
+  }
+  finally {
+    atualizandoPedido.value = false
   }
 }
 </script>
@@ -412,21 +491,156 @@ async function criarReserva(): Promise<void> {
           </ul>
 
           <template #footer>
-            <div class="reserva-card__prazo">
-              <span class="reserva-card__prazo-label">Tempo restante</span>
-              <strong
-                class="reserva-card__contador"
-                aria-live="polite"
+            <div class="reserva-card__acoes">
+              <div
+                v-if="reserva.status === 'ativa'"
+                class="reserva-card__prazo"
               >
-                {{ contadorReserva }}
-              </strong>
-              <span
-                v-if="consultandoReserva"
-                class="reserva-card__consulta"
+                <span class="reserva-card__prazo-label">Tempo restante</span>
+                <strong
+                  class="reserva-card__contador"
+                  aria-live="polite"
+                >
+                  {{ contadorReserva }}
+                </strong>
+                <span
+                  v-if="consultandoReserva"
+                  class="reserva-card__consulta"
+                >
+                  Verificando estado no servidor…
+                </span>
+              </div>
+              <p
+                v-else-if="reserva.status === 'confirmada'"
+                class="reserva-card__confirmada"
               >
-                Verificando estado no servidor…
-              </span>
+                Esta reserva já gerou um pedido.
+              </p>
+              <p
+                v-else
+                class="reserva-card__expirada"
+              >
+                Prazo encerrado. Você pode iniciar uma nova seleção.
+              </p>
+
+              <UButton
+                v-if="reserva.status === 'ativa'"
+                class="reserva-card__confirmar"
+                :disabled="!podeConfirmar"
+                :loading="confirmandoReserva"
+                @click="confirmarReserva"
+              >
+                Confirmar reserva
+              </UButton>
             </div>
+          </template>
+        </UCard>
+
+        <UCard
+          v-if="pedido"
+          class="pedido-card"
+        >
+          <template #header>
+            <div class="pedido-card__cabecalho">
+              <div class="pedido-card__identificacao">
+                <h2 class="pedido-card__titulo">
+                  Pedido
+                </h2>
+                <p class="pedido-card__id">
+                  {{ pedido.id }}
+                </p>
+              </div>
+              <UBadge
+                class="pedido-card__status"
+                :color="pedido.status === 'pago' ? 'success' : pedido.status === 'cancelado' ? 'error' : 'warning'"
+                variant="soft"
+              >
+                {{ pedido.status.replace('_', ' ') }}
+              </UBadge>
+            </div>
+          </template>
+
+          <div class="pedido-card__tabela-container">
+            <table class="pedido-card__tabela">
+              <thead class="pedido-card__tabela-cabecalho">
+                <tr class="pedido-card__linha-cabecalho">
+                  <th class="pedido-card__celula-cabecalho">SKU</th>
+                  <th class="pedido-card__celula-cabecalho">Qtd.</th>
+                  <th class="pedido-card__celula-cabecalho">Preço</th>
+                  <th class="pedido-card__celula-cabecalho">Valor</th>
+                  <th class="pedido-card__celula-cabecalho">Desconto</th>
+                  <th class="pedido-card__celula-cabecalho">Líquido</th>
+                </tr>
+              </thead>
+              <tbody class="pedido-card__tabela-corpo">
+                <tr
+                  v-for="linha in pedido.linhas"
+                  :key="linha.sku"
+                  class="pedido-card__linha"
+                >
+                  <td class="pedido-card__celula pedido-card__celula--sku">
+                    {{ linha.sku }}
+                  </td>
+                  <td class="pedido-card__celula">
+                    {{ linha.quantidade }}
+                  </td>
+                  <td class="pedido-card__celula">
+                    {{ formatarCentavos(linha.preco_centavos) }}
+                  </td>
+                  <td class="pedido-card__celula">
+                    {{ formatarCentavos(linha.valor_centavos) }}
+                  </td>
+                  <td class="pedido-card__celula">
+                    {{ formatarCentavos(linha.desconto_centavos) }}
+                  </td>
+                  <td class="pedido-card__celula">
+                    {{ formatarCentavos(linha.liquido_centavos) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <dl class="pedido-card__totais">
+            <div class="pedido-card__total-linha">
+              <dt class="pedido-card__total-rotulo">Subtotal</dt>
+              <dd class="pedido-card__total-valor">
+                {{ formatarCentavos(pedido.subtotal_centavos) }}
+              </dd>
+            </div>
+            <div class="pedido-card__total-linha">
+              <dt class="pedido-card__total-rotulo">Desconto</dt>
+              <dd class="pedido-card__total-valor">
+                {{ formatarCentavos(pedido.desconto_centavos) }}
+              </dd>
+            </div>
+            <div class="pedido-card__total-linha pedido-card__total-linha--destaque">
+              <dt class="pedido-card__total-rotulo">Total</dt>
+              <dd class="pedido-card__total-valor">
+                {{ formatarCentavos(pedido.total_centavos) }}
+              </dd>
+            </div>
+            <div
+              v-if="pedido.pago_em"
+              class="pedido-card__total-linha"
+            >
+              <dt class="pedido-card__total-rotulo">Pago em</dt>
+              <dd class="pedido-card__total-valor">
+                <time :datetime="pedido.pago_em">{{ pedido.pago_em }}</time>
+              </dd>
+            </div>
+          </dl>
+
+          <template #footer>
+            <UButton
+              class="pedido-card__atualizar"
+              color="neutral"
+              :loading="atualizandoPedido"
+              variant="soft"
+              @click="atualizarStatusPedido"
+            >
+              Atualizar status
+            </UButton>
           </template>
         </UCard>
       </UContainer>
@@ -627,6 +841,14 @@ async function criarReserva(): Promise<void> {
     gap: $espaco-sm;
   }
 
+  &__acoes {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: $espaco-md;
+    justify-content: space-between;
+  }
+
   &__prazo-label {
     color: $cor-texto-suave;
   }
@@ -640,6 +862,116 @@ async function criarReserva(): Promise<void> {
   &__consulta {
     color: $cor-texto-suave;
     font-size: $fonte-pequena;
+  }
+
+  &__confirmada,
+  &__expirada {
+    color: $cor-texto-suave;
+  }
+
+  &__confirmar {
+    justify-content: center;
+  }
+}
+
+.pedido-card {
+  border-radius: $raio-lg;
+  margin-top: $espaco-md;
+
+  &__cabecalho {
+    align-items: flex-start;
+    display: flex;
+    gap: $espaco-md;
+    justify-content: space-between;
+  }
+
+  &__identificacao {
+    min-width: 0;
+  }
+
+  &__titulo {
+    color: $cor-texto;
+    font-size: $fonte-subtitulo;
+    font-weight: 700;
+  }
+
+  &__id {
+    color: $cor-texto-suave;
+    font-family: monospace;
+    font-size: $fonte-pequena;
+    overflow-wrap: anywhere;
+  }
+
+  &__status {
+    flex: 0 0 auto;
+    text-transform: capitalize;
+  }
+
+  &__tabela-container {
+    overflow-x: auto;
+  }
+
+  &__tabela {
+    border-collapse: collapse;
+    color: $cor-texto;
+    min-width: 44rem;
+    width: 100%;
+  }
+
+  &__celula-cabecalho,
+  &__celula {
+    border-bottom: 1px solid $cor-borda;
+    padding: $espaco-sm;
+    text-align: right;
+  }
+
+  &__celula-cabecalho {
+    color: $cor-texto-suave;
+    font-size: $fonte-pequena;
+    font-weight: 600;
+  }
+
+  &__celula-cabecalho:first-child,
+  &__celula--sku {
+    text-align: left;
+  }
+
+  &__celula--sku {
+    font-family: monospace;
+  }
+
+  &__totais {
+    display: grid;
+    gap: $espaco-xs;
+    margin-left: auto;
+    margin-top: $espaco-md;
+    max-width: 22rem;
+  }
+
+  &__total-linha {
+    display: flex;
+    gap: $espaco-md;
+    justify-content: space-between;
+  }
+
+  &__total-linha--destaque {
+    color: $cor-destaque;
+    font-size: $fonte-preco;
+    font-weight: 700;
+  }
+
+  &__total-rotulo {
+    color: inherit;
+  }
+
+  &__total-valor {
+    color: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  &__atualizar {
+    justify-content: center;
   }
 }
 </style>

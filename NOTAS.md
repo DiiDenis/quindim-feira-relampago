@@ -167,3 +167,8 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Com a API temporariamente executada com TTL de dois segundos, a interface mostrou `00:02`, consultou a reserva ao zerar, recebeu `expirada`, devolveu o QND-001 de nove para dez disponíveis e liberou uma nova seleção.
 - A inspeção do console durante o cenário não encontrou avisos ou erros de hidratação. A API curta foi removida, a API padrão voltou saudável e o teste direcionado confirmou novamente o TTL padrão de 900 segundos.
 - Testes unitários do contador cobriram o prazo absoluto, o instante exato da expiração e a formatação de 15:00, 00:05 e 00:00; a suíte frontend passou com seis testes.
+- A interface passou a confirmar reservas sem corpo, bloquear clique repetido, consultar a reserva confirmada e apresentar o pedido retornado sem recalcular desconto ou rateio no navegador.
+- O cenário real com QND-001, QND-002 e QND-003 mostrou subtotal 8975, desconto 898, total 8077 e rateio 399/299/200; o clique duplo terminou com uma reserva e um pedido no estado persistido.
+- Um webhook assinado externamente marcou o pedido como pago. O botão de atualização trouxe `pago` e `pago_em` para a tela, enquanto o HTML público permaneceu sem segredo, nome do segredo ou URL interna da API.
+- A fronteira 410 foi exercitada tornando o prazo de uma reserva de teste passado no MongoDB: a confirmação exibiu a expiração, recompôs a disponibilidade e liberou nova seleção. O reset recompôs o seed ao final.
+- A primeira inspeção do snapshot usou por engano o nome `eventos_pagamento`; a coleção interna correta é `eventos`, e a repetição confirmou exatamente uma reserva, um pedido e um evento.

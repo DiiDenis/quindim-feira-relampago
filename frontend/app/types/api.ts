@@ -35,3 +35,25 @@ export interface RespostaErro {
     detalhes: Record<string, unknown>
   }
 }
+
+export interface LinhaPedido {
+  sku: string
+  quantidade: number
+  preco_centavos: number
+  valor_centavos: number
+  desconto_centavos: number
+  liquido_centavos: number
+}
+
+export interface Pedido {
+  id: string
+  reserva_id: string
+  cliente_id: string
+  status: 'aguardando_pagamento' | 'pago' | 'cancelado'
+  linhas: LinhaPedido[]
+  subtotal_centavos: number
+  desconto_centavos: number
+  total_centavos: number
+  criado_em: string
+  pago_em: string | null
+}
