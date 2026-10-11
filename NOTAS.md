@@ -124,3 +124,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Testes de fronteira confirmaram que uma tentativa iniciada antes do prazo não é publicada após vencê-lo e que a corrida com uma leitura termina somente em confirmação integral ou expiração integral.
 - A primeira execução dos novos testes usou `Counter.update` com dicionários não hashable e consultou o nome errado do status em `ErroNegocio`; as duas verificações do teste foram corrigidas e os cenários passaram na repetição.
 - A checagem de formato pediu a compactação da equação de invariante; o Ruff aplicou o ajuste antes da verificação final.
+- A entrada de webhook passou a aceitar somente IDs não vazios, tipos pago/recusado e data com fuso normalizada para UTC, sem tratar `pedido_id` como ID de rota.
+- O HMAC-SHA256 dos bytes originais foi conferido com o vetor fixo de 114 bytes do PDF; JSON equivalente com espaços exigiu outra assinatura, e a suíte completa passou com 181 testes.
