@@ -6,7 +6,9 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 
 from .dinheiro import calcular_desconto, ratear_desconto
+from .erros import ErroNegocio
 from .formatos import serializar_data_utc
+from .reservas import encontrar_reserva
 
 
 class LinhaPedidoSaida(BaseModel):
@@ -138,3 +140,40 @@ def criar_resposta_pedido(pedido: dict[str, Any]) -> PedidoSaida:
             "pago_em": pedido["pago_em"],
         }
     )
+
+
+def confirmar_reserva(
+    estado: dict[str, Any],
+    id_reserva: str,
+    id_novo_pedido: str,
+    agora: datetime,
+) -> tuple[dict[str, Any], bool]:
+    """Confirma uma reserva uma única vez e indica se criou o pedido."""
+    reserva = encontrar_reserva(estado, id_reserva)
+    if reserva["status"] == "expirada":
+        raise ErroNegocio(
+            410,
+            "reserva_expirada",
+            "A reserva está expirada.",
+        )
+
+    if reserva["status"] == "confirmada":
+        id_pedido = reserva.get("pedido_id")
+        if not isinstance(id_pedido, str) or not id_pedido:
+            raise RuntimeError("Reserva confirmada sem pedido vinculado válido.")
+        pedido = next(
+            (pedido for pedido in estado["pedidos"] if pedido["id"] == id_pedido),
+            None,
+        )
+        if pedido is None:
+            raise RuntimeError("Reserva confirmada sem pedido vinculado válido.")
+        return pedido, False
+
+    if reserva["status"] != "ativa":
+        raise RuntimeError("Reserva com status interno desconhecido.")
+
+    pedido = montar_pedido(reserva, id_novo_pedido, agora)
+    estado["pedidos"].append(pedido)
+    reserva["status"] = "confirmada"
+    reserva["pedido_id"] = pedido["id"]
+    return pedido, True
