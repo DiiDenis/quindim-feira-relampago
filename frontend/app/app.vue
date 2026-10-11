@@ -675,9 +675,19 @@ async function atualizarStatusPedido(): Promise<void> {
 
 <style scoped lang="scss">
 .pagina-inicial {
-  background: $cor-fundo;
+  background: linear-gradient(
+    180deg,
+    $cor-amarelo 0,
+    $cor-amarelo 22rem,
+    $cor-fundo 22rem,
+    $cor-fundo 100%
+  );
   min-height: 100vh;
-  padding-block: $espaco-xl;
+  padding-block: $espaco-md $espaco-xl;
+
+  @include breakpoint(md) {
+    padding-block: $espaco-xl;
+  }
 
   &__container {
     width: 100%;
@@ -689,22 +699,35 @@ async function atualizarStatusPedido(): Promise<void> {
 
   &__cabecalho {
     margin-bottom: $espaco-xl;
+    max-width: 48rem;
   }
 
   &__status {
+    background: $cor-superficie;
+    color: $cor-azul;
     font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   &__titulo {
-    color: $cor-texto;
+    background: $cor-azul;
+    box-decoration-break: clone;
+    color: $cor-superficie;
+    display: table;
     font-size: $fonte-titulo;
-    font-weight: 700;
-    line-height: 1.15;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    margin-top: $espaco-sm;
+    padding: $espaco-xs $espaco-sm;
   }
 
   &__descricao {
-    color: $cor-texto-suave;
-    margin-top: $espaco-sm;
+    color: $cor-texto;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-top: $espaco-md;
   }
 
   &__carregando,
@@ -745,9 +768,42 @@ async function atualizarStatusPedido(): Promise<void> {
 }
 
 .livro-card {
+  background: $cor-superficie;
+  border: 1px solid $cor-borda;
   border-radius: $raio-lg;
+  box-shadow: $sombra-card;
+  position: relative;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+
+  &::before {
+    background: $cor-azul;
+    content: "";
+    height: 0.4rem;
+    inset: 0 0 auto;
+    position: absolute;
+    z-index: 1;
+  }
+
+  &:nth-child(4n + 2)::before {
+    background: $cor-verde;
+  }
+
+  &:nth-child(4n + 3)::before {
+    background: $cor-coral;
+  }
+
+  &:nth-child(4n + 4)::before {
+    background: $cor-amarelo;
+  }
+
+  &:hover {
+    box-shadow: 0 1.25rem 3rem rgb(59 59 58 / 16%);
+    transform: translateY(-0.25rem);
+  }
 
   &__sku {
+    background: $cor-fundo-suave;
+    color: $cor-texto;
     font-family: monospace;
   }
 
@@ -759,9 +815,9 @@ async function atualizarStatusPedido(): Promise<void> {
   }
 
   &__preco {
-    color: $cor-destaque;
+    color: $cor-coral;
     font-size: $fonte-preco;
-    font-weight: 700;
+    font-weight: 800;
     margin-top: $espaco-md;
   }
 
@@ -789,7 +845,10 @@ async function atualizarStatusPedido(): Promise<void> {
 .reserva-form {
   align-items: end;
   background: $cor-superficie;
+  border: 1px solid $cor-borda;
+  border-top: 0.4rem solid $cor-amarelo;
   border-radius: $raio-lg;
+  box-shadow: $sombra-card;
   display: grid;
   gap: $espaco-md;
   margin-top: $espaco-xl;
@@ -808,12 +867,23 @@ async function atualizarStatusPedido(): Promise<void> {
   }
 
   &__botao {
+    background: $cor-verde;
+    color: $cor-superficie;
+    font-weight: 700;
     justify-content: center;
+
+    &:hover {
+      background: $cor-verde-escuro;
+    }
   }
 }
 
 .reserva-card {
+  background: $cor-superficie;
+  border: 1px solid $cor-borda;
+  border-top: 0.4rem solid $cor-azul;
   border-radius: $raio-lg;
+  box-shadow: $sombra-card;
   margin-top: $espaco-md;
 
   &__cabecalho {
@@ -894,7 +964,7 @@ async function atualizarStatusPedido(): Promise<void> {
   }
 
   &__contador {
-    color: $cor-destaque;
+    color: $cor-coral;
     font-size: $fonte-preco;
     font-variant-numeric: tabular-nums;
   }
@@ -910,12 +980,23 @@ async function atualizarStatusPedido(): Promise<void> {
   }
 
   &__confirmar {
+    background: $cor-verde;
+    color: $cor-superficie;
+    font-weight: 700;
     justify-content: center;
+
+    &:hover {
+      background: $cor-verde-escuro;
+    }
   }
 }
 
 .pedido-card {
+  background: $cor-superficie;
+  border: 1px solid $cor-borda;
+  border-top: 0.4rem solid $cor-coral;
   border-radius: $raio-lg;
+  box-shadow: $sombra-card;
   margin-top: $espaco-md;
 
   &__cabecalho {

@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light;
+  --ui-primary: #{$cor-verde};
+  --ui-bg: #{$cor-superficie};
+  --ui-bg-muted: #{$cor-fundo-suave};
+  --ui-bg-elevated: #{$cor-superficie};
+  --ui-bg-accented: #{$cor-amarelo};
+  --ui-bg-inverted: #{$cor-texto};
+  --ui-text: #{$cor-texto};
+  --ui-text-muted: #{$cor-texto-suave};
+  --ui-text-dimmed: #{$cor-texto-suave};
+  --ui-text-highlighted: #{$cor-texto};
+  --ui-text-inverted: #{$cor-superficie};
+  --ui-border: #{$cor-borda};
+  --ui-border-muted: #{$cor-borda};
+  --ui-border-accented: #{$cor-amarelo};
+  --ui-border-inverted: #{$cor-texto};
+}
+
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  background: $cor-fundo;
+  color: $cor-texto;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  margin: 0;
+}
