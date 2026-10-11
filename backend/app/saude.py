@@ -3,7 +3,7 @@
 from typing import Literal, cast
 
 from flask import Blueprint, Response, current_app, jsonify
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from pymongo.errors import PyMongoError
 
 from .erros import criar_resposta_erro
@@ -14,6 +14,8 @@ bp = Blueprint("saude", __name__)
 
 class RespostaSaude(BaseModel):
     """Resposta pública quando todas as dependências estão acessíveis."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
 
     status: Literal["ok"]
 

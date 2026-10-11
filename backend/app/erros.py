@@ -3,12 +3,14 @@
 from typing import Any
 
 from flask import Flask, Response, current_app, jsonify
-from pydantic import BaseModel, Field, JsonValue, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError
 from werkzeug.exceptions import BadRequest, NotFound, UnsupportedMediaType
 
 
 class DetalheErro(BaseModel):
     """Conteúdo público de um erro da API."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
 
     codigo: str
     mensagem: str
@@ -17,6 +19,8 @@ class DetalheErro(BaseModel):
 
 class RespostaErro(BaseModel):
     """Envelope público comum a todos os erros."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
 
     erro: DetalheErro
 

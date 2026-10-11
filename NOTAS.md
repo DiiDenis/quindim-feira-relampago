@@ -20,7 +20,7 @@ Estas são decisões nossas para atender o contrato; não são escolhas aprovada
 
 Limitações conhecidas: o documento único concentra contenção, cresce com reservas/pedidos/eventos, custa mais para ler e regravar e está sujeito ao limite BSON de 16 MiB. Consultas podem precisar publicar expirações e incrementar a versão. O laço CAS não limita conflitos normais; timeouts de infraestrutura continuam possíveis e são propagados, não tratados como conflito. É uma solução deliberada para a feira pequena e para MongoDB standalone, não uma arquitetura de escala ilimitada.
 
-O CAS atual protege geração e versão. A guarda temporal de expiração no filtro do MongoDB ainda não está implementada e será integrada junto da política de expiração; portanto, esta etapa não resolve sozinha toda a concorrência do domínio.
+O CAS protege geração e versão e também inclui no filtro do MongoDB a fronteira temporal relevante para cada operação. Essa proteção cobre as disputas modeladas e testadas neste projeto, mas não substitui teste de carga nem demonstra escalabilidade ilimitada.
 
 ### Ambiguidades e critérios adotados
 
@@ -138,3 +138,8 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Vinte entregas simultâneas do mesmo evento de recusa retornaram 200, consumiram um único ID e devolveram a unidade uma vez; vinte IDs distintos também preservaram uma única devolução.
 - Corridas entre pago/recusado e entre recusa/nova reserva foram repetidas em cinco rodadas cada; os testes aceitaram os vencedores possíveis e recalcularam a invariante diretamente do snapshot final.
 - A suíte completa passou com 216 testes contra quatro workers e MongoDB real; a checagem de formato compactou duas asserções antes da verificação final.
+- A auditoria final confirmou exatamente as oito rotas públicas do contrato e tornou também os modelos de saúde e erro estritos contra campos extras e conversões implícitas.
+- A primeira tentativa de executar os testes direcionados usou por engano o serviço Compose `test`; o nome correto `testes` foi usado na repetição, que passou com 19 testes.
+- Uma reserva confirmada e seu pedido foram consultados antes e depois de reiniciar somente a API; as respostas permaneceram idênticas, o contêiner do MongoDB não mudou e o Gunicorn voltou com quatro workers.
+- O reset administrativo foi aplicado ao final da verificação de reinício. Esse cenário comprova persistência entre processos da API, mas não é teste de queda do host, durabilidade física nem teste de carga.
+- Após a auditoria, a suíte completa passou com 227 testes; Ruff e a verificação de formatação passaram nos 49 arquivos Python.
