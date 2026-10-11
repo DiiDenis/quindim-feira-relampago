@@ -73,6 +73,14 @@ def token_admin() -> str:
     return token
 
 
+@pytest.fixture(scope="session")
+def segredo_webhook() -> str:
+    segredo = os.environ.get("WEBHOOK_SEGREDO", "").strip()
+    if not segredo:
+        pytest.fail("WEBHOOK_SEGREDO não foi definido para os testes.", pytrace=False)
+    return segredo
+
+
 @pytest.fixture(autouse=True)
 def resetar_feira_antes_de_cenario_de_negocio(request: pytest.FixtureRequest) -> None:
     """Isola cenários de negócio sem permitir reset fora do Compose de testes."""

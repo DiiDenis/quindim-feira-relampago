@@ -5,11 +5,17 @@ import hmac
 import re
 from collections import Counter
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
+from flask import Blueprint, Response, current_app, jsonify, request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .banco import executar_com_cas
+from .erros import ErroNegocio, validar_entrada
+from .mongo import ConexaoMongo
+
 PADRAO_ASSINATURA = re.compile(r"[0-9a-fA-F]{64}\Z")
+bp = Blueprint("pagamentos", __name__, url_prefix="/v1")
 
 
 class EventoPagamentoEntrada(BaseModel):
@@ -35,6 +41,14 @@ class EventoPagamentoEntrada(BaseModel):
         if valor.tzinfo is None or valor.utcoffset() is None:
             raise ValueError("ocorrido_em deve informar o fuso horário.")
         return valor.astimezone(UTC)
+
+
+class WebhookPagamentoSaida(BaseModel):
+    """Confirma o recebimento sem revelar o efeito interno do evento."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    recebido: Literal[True]
 
 
 def validar_e_normalizar_evento_pagamento(dados: Any) -> EventoPagamentoEntrada:
@@ -105,3 +119,26 @@ def processar_evento_pagamento(
     for sku, quantidade in devolucoes.items():
         livros_por_sku[sku]["disponivel"] += quantidade
     return True
+
+
+@bp.post("/webhooks/pagamento")
+def receber_webhook_pagamento() -> tuple[Response, int]:
+    """Autentica os bytes antes de validar e aplicar o evento via CAS."""
+    corpo = request.get_data(cache=True)
+    segredo = cast(str, current_app.config["WEBHOOK_SEGREDO"])
+    if not assinatura_valida(corpo, request.headers.get("X-Assinatura"), segredo):
+        raise ErroNegocio(
+            401,
+            "nao_autorizado",
+            "Assinatura do webhook inválida.",
+        )
+
+    evento = validar_entrada(EventoPagamentoEntrada, request.get_json())
+    conexao = cast(ConexaoMongo, current_app.extensions["mongo"])
+
+    def executar(estado: dict[str, Any], _agora: datetime) -> WebhookPagamentoSaida:
+        processar_evento_pagamento(estado, evento)
+        return WebhookPagamentoSaida(recebido=True)
+
+    resposta = executar_com_cas(conexao.banco, executar)
+    return jsonify(resposta.model_dump(mode="json")), 200

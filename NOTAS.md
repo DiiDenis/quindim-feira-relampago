@@ -129,3 +129,6 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Eventos de pagamento passaram a ser consumidos globalmente pelo `evento_id`; pedidos aguardando mudam para pago ou cancelado, enquanto estados finais não são reabertos.
 - A recusa devolve as unidades uma única vez no mesmo estado que registra o evento e cancela o pedido; pedido inexistente e eventos sem efeito também permanecem registrados para deduplicação.
 - A primeira checagem de estilo pediu a união de duas condições e a de formato compactou duas expressões; após os ajustes, a suíte completa passou com 191 testes.
+- `POST /v1/webhooks/pagamento` passou a autenticar o corpo bruto antes de interpretar JSON ou acessar o agregado, e aplica eventos válidos pelo mesmo CAS de reservas e pedidos.
+- Um teste com reserva vencida confirmou que assinatura ausente ou inválida responde 401 sem alterar versão, status ou estoque; pago, recusado, duplicado, terminal e pedido inexistente respondem `recebido` conforme o contrato.
+- A API foi reconstruída com os quatro workers para os testes HTTP; a suíte completa passou com 197 testes e a checagem de formato compactou uma asserção antes da verificação final.
