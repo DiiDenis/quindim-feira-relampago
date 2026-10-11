@@ -41,9 +41,23 @@ def test_catalogo_ssr_e_fluxo_pago_com_rateio_exato(
     assert segredo_webhook not in html_inicial
 
     abrir_pagina(pagina, url_frontend)
-    quantidades = pagina.get_by_label("Quantidade")
+    expect(
+        pagina.get_by_role(
+            "button",
+            name=f"Diminuir quantidade de {TITULOS[0]}",
+        )
+    ).to_be_disabled()
     for indice in range(3):
-        quantidades.nth(indice).fill("1")
+        pagina.get_by_role(
+            "button",
+            name=f"Aumentar quantidade de {TITULOS[indice]}",
+        ).click()
+    expect(
+        pagina.get_by_role(
+            "button",
+            name=f"Diminuir quantidade de {TITULOS[0]}",
+        )
+    ).to_be_enabled()
 
     pagina.get_by_role("button", name="Criar reserva").click()
     expect(pagina.get_by_text("ativa", exact=True)).to_be_visible()
@@ -122,7 +136,10 @@ def test_interface_trata_estoque_concorrente_com_409(
     )
     assert resposta_concorrente.status_code == 201
 
-    pagina.get_by_label("Quantidade").nth(4).fill("1")
+    pagina.get_by_role(
+        "button",
+        name=f"Aumentar quantidade de {TITULOS[4]}",
+    ).click()
     pagina.get_by_role("button", name="Criar reserva").click()
 
     mensagem_estoque = pagina.get_by_text(
@@ -131,7 +148,13 @@ def test_interface_trata_estoque_concorrente_com_409(
     )
     expect(mensagem_estoque).to_be_visible()
     expect(pagina.get_by_text("0 disponíveis", exact=True)).to_be_visible()
-    assert pagina.get_by_label("Quantidade").nth(4).input_value() == "0"
+    expect(pagina.locator(".livro-card__quantidade-valor").nth(4)).to_have_text("0")
+    expect(
+        pagina.get_by_role(
+            "button",
+            name=f"Diminuir quantidade de {TITULOS[4]}",
+        )
+    ).to_be_disabled()
     expect(pagina.get_by_role("button", name="Criar reserva")).to_be_disabled()
 
 
@@ -142,7 +165,10 @@ def test_interface_trata_confirmacao_expirada_com_410(
     banco_mongo: Database[dict],
 ) -> None:
     abrir_pagina(pagina, url_frontend)
-    pagina.get_by_label("Quantidade").nth(0).fill("1")
+    pagina.get_by_role(
+        "button",
+        name=f"Aumentar quantidade de {TITULOS[0]}",
+    ).click()
     pagina.get_by_role("button", name="Criar reserva").click()
     expect(pagina.get_by_text("ativa", exact=True)).to_be_visible()
 

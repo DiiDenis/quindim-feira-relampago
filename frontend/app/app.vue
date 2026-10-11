@@ -100,6 +100,18 @@ function definirQuantidade(
   )
 }
 
+function quantidadeSelecionada(livro: Livro): number {
+  return quantidades[livro.sku] ?? 0
+}
+
+function selecaoDoLivroBloqueada(livro: Livro): boolean {
+  return livro.disponivel === 0 || enviandoReserva.value || !selecaoLiberada.value
+}
+
+function alterarQuantidade(livro: Livro, diferenca: number): void {
+  definirQuantidade(livro, quantidadeSelecionada(livro) + diferenca)
+}
+
 function ajustarQuantidadesAoCatalogo(): void {
   livros.value.forEach((livro) => {
     definirQuantidade(livro, quantidades[livro.sku] ?? 0)
@@ -395,22 +407,41 @@ async function atualizarStatusPedido(): Promise<void> {
                   {{ livro.disponivel }}
                   {{ livro.disponivel === 1 ? 'disponível' : 'disponíveis' }}
                 </p>
-                <label
-                  class="livro-card__quantidade-label"
-                  :for="`quantidade-${livro.sku}`"
-                >
+                <span class="livro-card__quantidade-label">
                   Quantidade
-                </label>
-                <UInput
-                  :id="`quantidade-${livro.sku}`"
-                  class="livro-card__quantidade"
-                  :disabled="livro.disponivel === 0 || enviandoReserva || !selecaoLiberada"
-                  :max="maximoSelecionavel(livro)"
-                  min="0"
-                  :model-value="quantidades[livro.sku] ?? 0"
-                  type="number"
-                  @update:model-value="definirQuantidade(livro, $event)"
-                />
+                </span>
+                <div
+                  class="livro-card__quantidade-controle"
+                  role="group"
+                  :aria-label="`Quantidade de ${livro.titulo}`"
+                >
+                  <UButton
+                    class="livro-card__quantidade-botao livro-card__quantidade-botao--diminuir"
+                    color="neutral"
+                    :aria-label="`Diminuir quantidade de ${livro.titulo}`"
+                    :disabled="selecaoDoLivroBloqueada(livro) || quantidadeSelecionada(livro) === 0"
+                    type="button"
+                    variant="soft"
+                    @click="alterarQuantidade(livro, -1)"
+                  >
+                    −
+                  </UButton>
+                  <output
+                    class="livro-card__quantidade-valor"
+                    :aria-label="`Quantidade selecionada de ${livro.titulo}`"
+                  >
+                    {{ quantidadeSelecionada(livro) }}
+                  </output>
+                  <UButton
+                    class="livro-card__quantidade-botao livro-card__quantidade-botao--aumentar"
+                    :aria-label="`Aumentar quantidade de ${livro.titulo}`"
+                    :disabled="selecaoDoLivroBloqueada(livro) || quantidadeSelecionada(livro) >= maximoSelecionavel(livro)"
+                    type="button"
+                    @click="alterarQuantidade(livro, 1)"
+                  >
+                    +
+                  </UButton>
+                </div>
               </div>
             </template>
           </UCard>
@@ -837,8 +868,35 @@ async function atualizarStatusPedido(): Promise<void> {
     font-weight: 600;
   }
 
-  &__quantidade {
-    width: 6rem;
+  &__quantidade-controle {
+    align-items: center;
+    display: flex;
+    gap: $espaco-xs;
+  }
+
+  &__quantidade-botao {
+    font-size: 1.125rem;
+    justify-content: center;
+    min-width: 2.5rem;
+  }
+
+  &__quantidade-botao--diminuir {
+    background: $cor-fundo-suave;
+    color: $cor-texto;
+  }
+
+  &__quantidade-botao--aumentar {
+    background: $cor-azul;
+    color: $cor-superficie;
+  }
+
+  &__quantidade-valor {
+    color: $cor-texto;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    min-width: 2ch;
+    text-align: center;
   }
 }
 
