@@ -110,3 +110,4 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Testes HTTP reais confirmaram que consultas simultâneas devolvem o estoque vencido uma única vez e que somente uma nova reserva vence a disputa pela unidade liberada.
 - A API foi recriada isoladamente com TTL de dois segundos; a reserva atravessou o relógio real, expirou sob demanda e a API foi restaurada ao padrão de 900 segundos.
 - A primeira execução do TTL curto iniciou o runner apenas com o Compose padrão, que recriou a API com 900 segundos; a configuração curta foi aplicada também ao runner e o cenário passou na repetição.
+- O desconto progressivo passou a ser calculado apenas com centavos e percentuais inteiros, incluindo arredondamento comercial e validação de valores internos impossíveis; a suíte completa passou com 118 testes.
