@@ -185,3 +185,9 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O modo escuro automático do Nuxt UI foi desativado porque combinava cards escuros com textos próprios escuros; os componentes agora recebem tokens claros consistentes, e a inspeção confirmou cards brancos, texto grafite e botões verdes com texto branco.
 - A quantidade deixou de ser digitada e passou a usar botões de menos e mais com valor intermediário; menos fica desativado em zero e mais respeita o limite de três ou a disponibilidade observada.
 - Os testes reais do navegador passaram a operar esses botões e confirmaram o estado desativado do controle de redução antes e depois de um conflito de estoque; os três fluxos continuaram aprovados.
+- O healthcheck do frontend deixou de renderizar a página SSR e passou a consultar uma rota neutra própria, evitando que a sondagem altere o estado temporal usado pelos testes de expiração.
+- Com API, frontend e MongoDB ligados, a suíte comum passou com 227 testes; a rota neutra respondeu `ok` e os três serviços permaneceram saudáveis.
+- Um clone novo do objeto remoto `a4f9a5e` foi criado sem copiar `.env`, dependências ou volume. O `.env.example` iniciou um MongoDB standalone vazio, o seed criou os cinco livros e o Gunicorn registrou quatro workers.
+- Nesse clone e volume isolados, passaram 158 testes unitários, 69 testes de integração/concorrência e três testes de navegador no Chromium. O ambiente temporário foi removido e o checkout principal foi religado com seu volume original.
+- Os comandos finais do README foram exercitados: os 13 cenários do webhook passaram, os oito testes utilitários do frontend e o typecheck passaram, e o reset autenticado respondeu 204 sem corpo.
+- O primeiro rascunho do README mostrou por engano `Authorization` no reset e produziu 401 durante a verificação manual; o exemplo foi corrigido para o header contratual `X-Admin-Token` e repetido com sucesso.
