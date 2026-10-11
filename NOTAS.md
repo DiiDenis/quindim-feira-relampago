@@ -172,3 +172,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Um webhook assinado externamente marcou o pedido como pago. O botão de atualização trouxe `pago` e `pago_em` para a tela, enquanto o HTML público permaneceu sem segredo, nome do segredo ou URL interna da API.
 - A fronteira 410 foi exercitada tornando o prazo de uma reserva de teste passado no MongoDB: a confirmação exibiu a expiração, recompôs a disponibilidade e liberou nova seleção. O reset recompôs o seed ao final.
 - A primeira inspeção do snapshot usou por engano o nome `eventos_pagamento`; a coleção interna correta é `eventos`, e a repetição confirmou exatamente uma reserva, um pedido e um evento.
+- A revisão funcional acrescentou estados explícitos de carregamento e falha do catálogo, com retentativa acessível. Com a API interrompida, o SSR mostrou a mensagem controlada; após religar a API, o botão recuperou os cinco livros sem recarregar a página.
+- O narrowing de erros desconhecidos foi isolado em um helper sem `any` e testado para envelopes válidos, falha de rede e resposta sem JSON. A primeira expectativa encontrou `{status: undefined}`; o helper passou a omitir o campo ausente e os oito testes passaram.
+- As ações de reserva, confirmação e atualização mantêm guardas contra repetição; campos da cesta permanecem bloqueados durante reserva ativa ou confirmada e são liberados somente após expiração informada pela API.
+- A inspeção final não encontrou avisos no console, alteração em arquivos do backend nem serviço sem saúde no Compose.

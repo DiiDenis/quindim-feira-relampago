@@ -3,9 +3,9 @@ import type {
   Livro,
   Pedido,
   Reserva,
-  RespostaErro,
   RespostaLivros,
 } from '~/types/api'
+import { lerErroApi } from '~/utils/erro-api'
 import { formatarCentavos } from '~/utils/moeda'
 import { construirItensReserva } from '~/utils/reserva'
 import {
@@ -19,6 +19,7 @@ const {
   data: respostaCatalogo,
   error: erroCatalogo,
   refresh: atualizarCatalogo,
+  status: statusCatalogo,
 } = await useFetch<RespostaLivros>('/api/livros', {
   key: 'catalogo-livros',
 })
@@ -32,6 +33,7 @@ const enviandoReserva = ref(false)
 const consultandoReserva = ref(false)
 const confirmandoReserva = ref(false)
 const atualizandoPedido = ref(false)
+const repetindoCatalogo = ref(false)
 const mensagemErro = ref('')
 const instanteAtualMs = ref<number | null>(null)
 let paginaMontada = false
@@ -102,24 +104,6 @@ function ajustarQuantidadesAoCatalogo(): void {
   livros.value.forEach((livro) => {
     definirQuantidade(livro, quantidades[livro.sku] ?? 0)
   })
-}
-
-function lerErroApi(erro: unknown): { status?: number, resposta?: RespostaErro } {
-  if (typeof erro !== 'object' || erro === null) {
-    return {}
-  }
-
-  const registro = erro as Record<string, unknown>
-  const status = typeof registro.status === 'number'
-    ? registro.status
-    : undefined
-  const resposta = registro.data
-
-  if (typeof resposta !== 'object' || resposta === null || !('erro' in resposta)) {
-    return { status }
-  }
-
-  return { status, resposta: resposta as RespostaErro }
 }
 
 function pararContador(): void {
@@ -208,10 +192,9 @@ async function criarReserva(): Promise<void> {
 
   enviandoReserva.value = true
   mensagemErro.value = ''
-  pedido.value = null
 
   try {
-    reserva.value = await $fetch<Reserva>('/api/reservas', {
+    const novaReserva = await $fetch<Reserva>('/api/reservas', {
       method: 'POST',
       body: {
         cliente_id: clienteId.value.trim(),
@@ -220,6 +203,8 @@ async function criarReserva(): Promise<void> {
       retry: 0,
     })
 
+    reserva.value = novaReserva
+    pedido.value = null
     Object.keys(quantidades).forEach(sku => quantidades[sku] = 0)
     await atualizarCatalogo()
   }
@@ -237,6 +222,21 @@ async function criarReserva(): Promise<void> {
   }
   finally {
     enviandoReserva.value = false
+  }
+}
+
+async function tentarCatalogoNovamente(): Promise<void> {
+  if (repetindoCatalogo.value) {
+    return
+  }
+
+  repetindoCatalogo.value = true
+
+  try {
+    await atualizarCatalogo()
+  }
+  finally {
+    repetindoCatalogo.value = false
   }
 }
 
@@ -331,13 +331,36 @@ async function atualizarStatusPedido(): Promise<void> {
         </header>
 
         <UAlert
-          v-if="erroCatalogo"
-          class="pagina-inicial__erro"
-          color="error"
-          description="Não foi possível carregar o catálogo agora."
-          title="Catálogo indisponível"
+          v-if="statusCatalogo === 'pending' && livros.length === 0"
+          class="pagina-inicial__carregando"
+          color="neutral"
+          description="Buscando os livros disponíveis."
+          title="Carregando catálogo"
           variant="soft"
         />
+
+        <div
+          v-else-if="erroCatalogo && livros.length === 0"
+          class="pagina-inicial__erro"
+        >
+          <UAlert
+            class="pagina-inicial__erro-alerta"
+            color="error"
+            description="Não foi possível carregar o catálogo agora."
+            title="Catálogo indisponível"
+            variant="soft"
+          />
+          <UButton
+            class="pagina-inicial__erro-botao"
+            color="neutral"
+            :disabled="repetindoCatalogo"
+            :loading="repetindoCatalogo"
+            variant="soft"
+            @click="tentarCatalogoNovamente"
+          >
+            Tentar novamente
+          </UButton>
+        </div>
 
         <section
           v-else
@@ -394,6 +417,7 @@ async function atualizarStatusPedido(): Promise<void> {
         </section>
 
         <form
+          v-if="!erroCatalogo || livros.length > 0"
           class="reserva-form"
           @submit.prevent="criarReserva"
         >
@@ -635,6 +659,7 @@ async function atualizarStatusPedido(): Promise<void> {
             <UButton
               class="pedido-card__atualizar"
               color="neutral"
+              :disabled="atualizandoPedido"
               :loading="atualizandoPedido"
               variant="soft"
               @click="atualizarStatusPedido"
@@ -682,8 +707,23 @@ async function atualizarStatusPedido(): Promise<void> {
     margin-top: $espaco-sm;
   }
 
+  &__carregando,
   &__erro {
     border-radius: $raio-lg;
+  }
+
+  &__erro {
+    display: grid;
+    gap: $espaco-sm;
+    justify-items: start;
+  }
+
+  &__erro-alerta {
+    width: 100%;
+  }
+
+  &__erro-botao {
+    justify-content: center;
   }
 
   &__catalogo {
