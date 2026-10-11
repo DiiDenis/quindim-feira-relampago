@@ -185,6 +185,21 @@ def confirmar_reserva(
     return pedido, True
 
 
+def encontrar_pedido(estado: dict[str, Any], id_pedido: str) -> dict[str, Any]:
+    """Encontra um pedido pelo ID público ou responde como recurso inexistente."""
+    pedido = next(
+        (pedido for pedido in estado["pedidos"] if pedido["id"] == id_pedido),
+        None,
+    )
+    if pedido is None:
+        raise ErroNegocio(
+            404,
+            "nao_encontrado",
+            "Recurso não encontrado.",
+        )
+    return pedido
+
+
 @bp.post("/reservas/<id_reserva>/confirmar")
 def publicar_confirmacao(id_reserva: str) -> tuple[Response, int]:
     """Confirma uma reserva via CAS e diferencia criação de repetição."""
@@ -210,3 +225,16 @@ def publicar_confirmacao(id_reserva: str) -> tuple[Response, int]:
 
     resposta, criado = executar_com_cas(conexao.banco, executar)
     return jsonify(resposta.model_dump(mode="json")), 201 if criado else 200
+
+
+@bp.get("/pedidos/<id_pedido>")
+def consultar_pedido(id_pedido: str) -> tuple[Response, int]:
+    """Consulta um pedido com o mesmo contrato público da confirmação."""
+    id_normalizado = str(interpretar_id_recurso(id_pedido))
+    conexao = cast(ConexaoMongo, current_app.extensions["mongo"])
+
+    def executar(estado: dict[str, Any], _agora: datetime) -> PedidoSaida:
+        return criar_resposta_pedido(encontrar_pedido(estado, id_normalizado))
+
+    resposta = executar_com_cas(conexao.banco, executar)
+    return jsonify(resposta.model_dump(mode="json")), 200

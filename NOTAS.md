@@ -118,3 +118,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A confirmação de domínio passou a criar e vincular o pedido uma única vez, devolver o mesmo pedido nas repetições e preservar o estoque já retido; a suíte completa passou com 150 testes.
 - A checagem de formato pediu a compactação de um dicionário no teste de confirmação; o trecho foi ajustado antes da revisão final.
 - O endpoint de confirmação passou a publicar a transição pelo CAS: cria com 201, repete com 200, rejeita corpo e persiste a liberação antes do erro 410; a suíte completa passou com 155 testes.
+- A consulta de pedido passou a reutilizar o mesmo DTO validado da confirmação, preservando linhas, centavos, datas e ocultando campos internos; a suíte completa passou com 158 testes.
+- A primeira checagem de formato da consulta pediu a compactação de uma chamada HTTP; o ajuste foi aplicado antes da revisão.
