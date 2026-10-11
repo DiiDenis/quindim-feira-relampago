@@ -147,3 +147,8 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Os 36 testes unitários de dinheiro e os 69 testes de integração HTTP passaram separadamente, incluindo concorrência de reservas, confirmações, pagamentos e expiração.
 - Uma execução isolada com TTL de dois segundos expirou e liberou uma reserva pelo relógio real; a API foi recriada depois com o padrão de 900 segundos, confirmado pelo mesmo teste.
 - Os comandos documentados no README foram repetidos no checkpoint, e a suíte completa terminou com 227 testes aprovados.
+- O frontend base foi criado com Nuxt 4.6.1, Vue 3.5.43, Nuxt UI 4.11.3 e TypeScript 5.9.3; o lock real foi gerado pelo npm e reproduzido com `npm ci` no Node 22.22.3 do Docker.
+- Os estilos próprios adotam SCSS, BEM e breakpoints centralizados; Tailwind permanece somente como dependência interna do Nuxt UI, sem utilitários ou `@apply` no código da aplicação.
+- A primeira tentativa de compilar o CSS global como SCSS fez o Sass interpretar os imports do Tailwind e falhou no bundle do servidor. Os imports exigidos pelo Nuxt UI foram isolados em CSS e os estilos próprios permaneceram em SCSS; typecheck e build passaram na repetição.
+- O Compose passou a subir MongoDB, API e frontend saudável na porta 3000. O HTML servido contém o conteúdo inicial renderizado e não contém a URL interna da API.
+- O `npm audit` registrou 15 alertas transitivos na árvore do Nuxt, incluindo dependências de ferramentas de desenvolvimento. `npm audit fix` não encontrou atualização compatível e a opção `--force` foi recusada porque propunha trocar Nuxt 4 por Nuxt 3.

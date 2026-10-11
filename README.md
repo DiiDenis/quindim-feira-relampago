@@ -2,7 +2,7 @@
 
 Projeto da avaliação técnica do Clube Quindim para reserva de estoque e pedidos.
 
-O backend expõe a API Flask na porta 8000 e usa MongoDB 8 standalone. Nesta etapa, o frontend ainda não faz parte do ambiente.
+O projeto usa Flask na API, MongoDB 8 standalone e Nuxt no frontend.
 
 ## Executar e testar o backend
 
@@ -13,4 +13,7 @@ docker compose up -d --build
 docker compose run --rm testes
 ```
 
-O primeiro comando sobe MongoDB e API. O segundo executa os testes unitários e de integração; o serviço `testes` não permanece em execução. A saúde da API fica disponível em `http://localhost:8000/healthz`.
+O primeiro comando sobe MongoDB, API e frontend. O segundo executa os testes unitários e de integração do backend; o serviço `testes` não permanece em execução.
+
+- Frontend: `http://localhost:3000`
+- Saúde da API: `http://localhost:8000/healthz`

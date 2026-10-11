@@ -1,0 +1,14 @@
+@use "sass:map";
+@use "tokens" as tokens;
+
+@mixin breakpoint($nome) {
+  $largura: map.get(tokens.$breakpoints, $nome);
+
+  @if $largura == null {
+    @error "Breakpoint desconhecido: #{$nome}.";
+  }
+
+  @media (min-width: $largura) {
+    @content;
+  }
+}

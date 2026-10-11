@@ -35,6 +35,30 @@ services:
       retries: 10
       start_period: 10s
 
+  frontend:
+    build:
+      context: ./frontend
+      target: runtime
+    environment:
+      NUXT_API_BASE: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))",
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
   testes:
     profiles:
       - teste
