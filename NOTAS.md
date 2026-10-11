@@ -113,3 +113,5 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O desconto progressivo passou a ser calculado apenas com centavos e percentuais inteiros, incluindo arredondamento comercial e validação de valores internos impossíveis; a suíte completa passou com 118 testes.
 - O desconto total passou a ser rateado proporcionalmente pelos maiores restos, com desempate pela ordem original; a suíte completa passou com 135 testes.
 - A primeira checagem do rateio encontrou uma asserção longa e a segunda pediu a compactação do gerador; o trecho foi ajustado até lint e formato passarem juntos.
+- A composição de pedidos passou a usar somente o snapshot da reserva, reaproveitando desconto e rateio para conferir valores de linha, subtotal, desconto e total líquido; a suíte completa passou com 143 testes.
+- A primeira checagem de estilo dos pedidos encontrou uma asserção longa e a seguinte pediu a compactação de uma compreensão; os dois pontos foram ajustados antes da revisão.
