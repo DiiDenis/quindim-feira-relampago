@@ -152,3 +152,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A primeira tentativa de compilar o CSS global como SCSS fez o Sass interpretar os imports do Tailwind e falhou no bundle do servidor. Os imports exigidos pelo Nuxt UI foram isolados em CSS e os estilos próprios permaneceram em SCSS; typecheck e build passaram na repetição.
 - O Compose passou a subir MongoDB, API e frontend saudável na porta 3000. O HTML servido contém o conteúdo inicial renderizado e não contém a URL interna da API.
 - O `npm audit` registrou 15 alertas transitivos na árvore do Nuxt, incluindo dependências de ferramentas de desenvolvimento. `npm audit fix` não encontrou atualização compatível e a opção `--force` foi recusada porque propunha trocar Nuxt 4 por Nuxt 3.
+- O BFF do Nuxt passou a expor somente as cinco rotas necessárias à interface e a montar no servidor os destinos fixos do Flask; não há proxy arbitrário, rota administrativa nem webhook no frontend.
+- Chamadas HTTP reais pelo Nuxt preservaram os status 200, 201, 400 e 404 e seus JSONs. Com a API interrompida, o BFF respondeu 502 genérico sem URL interna ou stack; a API foi religada e voltou saudável.
+- A primeira checagem de tipos do BFF encontrou o corpo `unknown` incompatível com o tipo aceito pelo `ofetch`. O corpo JSON foi tipado como objeto sem acrescentar validação de negócio, e typecheck e build passaram na repetição.
+- O HTML público não expôs a URL interna nem o token administrativo. Depois da mudança, a suíte completa do backend continuou com 227 testes aprovados.
