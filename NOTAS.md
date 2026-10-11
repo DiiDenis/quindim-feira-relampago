@@ -159,3 +159,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O catálogo passou a ser buscado por `useFetch('/api/livros')` durante o SSR e renderizado com tipos públicos mínimos. O HTML inicial retornado pelo Nuxt continha os cinco títulos e os cinco preços, sem endereço do Flask.
 - A apresentação de moeda converte centavos inteiros seguros para `BigInt`, separa reais e centavos por divisão e resto inteiros e aplica agrupamento `pt-BR`; testes cobriram 3990, 1995, 12900, zero e entradas inseguras.
 - A primeira checagem de tipos dos testes não encontrou as declarações de `node:test` e `node:assert`; `@types/node` foi adicionado como dependência de desenvolvimento e teste, typecheck e build passaram na repetição.
+- A página passou a montar a reserva somente com cliente, SKU e quantidades positivas, limitar visualmente cada item a três e à disponibilidade observada e impedir envio vazio ou repetido durante a requisição.
+- Um envio real pela interface criou uma única reserva mesmo com clique duplo, zerou a seleção e atualizou o QND-001 de dez para nove disponíveis. A inspeção do estado confirmou uma reserva para `cli_demo` com uma unidade.
+- Um conflito concorrente real no QND-005 devolveu 409 e atualizou catálogo e mensagem. O primeiro teste visual revelou que a quantidade antiga permanecia no campo após a disponibilidade cair a zero; a seleção passou a ser reconciliada com o catálogo e o cenário foi repetido com campo zerado e botão desabilitado.
+- O reset administrativo recompôs o seed ao final dos cenários de interface.
