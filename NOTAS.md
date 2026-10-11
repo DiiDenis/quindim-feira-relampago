@@ -135,3 +135,6 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - O contrato HTTP completo do webhook foi exercitado com HMAC calculado independentemente pela biblioteca padrão, incluindo o vetor fixo do PDF, JSON malformado, data sem fuso e IDs de pedido válidos ou malformados.
 - Reentregas, payload conflitante com o mesmo `evento_id` e eventos fora de ordem preservaram estado terminal e `pago_em`; após recusa, uma nova reserva consumiu de fato a unidade devolvida.
 - Confirmações repetidas depois de pagamento ou cancelamento devolveram o mesmo pedido atual sem criar outro; a suíte completa passou com 204 testes, e o Ruff pediu uma linha em branco no bloco de imports antes da verificação final.
+- Vinte entregas simultâneas do mesmo evento de recusa retornaram 200, consumiram um único ID e devolveram a unidade uma vez; vinte IDs distintos também preservaram uma única devolução.
+- Corridas entre pago/recusado e entre recusa/nova reserva foram repetidas em cinco rodadas cada; os testes aceitaram os vencedores possíveis e recalcularam a invariante diretamente do snapshot final.
+- A suíte completa passou com 216 testes contra quatro workers e MongoDB real; a checagem de formato compactou duas asserções antes da verificação final.
