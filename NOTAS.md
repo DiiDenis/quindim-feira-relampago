@@ -163,3 +163,7 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - Um envio real pela interface criou uma única reserva mesmo com clique duplo, zerou a seleção e atualizou o QND-001 de dez para nove disponíveis. A inspeção do estado confirmou uma reserva para `cli_demo` com uma unidade.
 - Um conflito concorrente real no QND-005 devolveu 409 e atualizou catálogo e mensagem. O primeiro teste visual revelou que a quantidade antiga permanecia no campo após a disponibilidade cair a zero; a seleção passou a ser reconciliada com o catálogo e o cenário foi repetido com campo zerado e botão desabilitado.
 - O reset administrativo recompôs o seed ao final dos cenários de interface.
+- A reserva ativa passou a exibir itens, status, prazo ISO e um contador calculado a cada tick pela diferença para `expira_em`; o relógio só inicia após a montagem e o intervalo é limpo ao trocar de reserva ou desmontar a página.
+- Com a API temporariamente executada com TTL de dois segundos, a interface mostrou `00:02`, consultou a reserva ao zerar, recebeu `expirada`, devolveu o QND-001 de nove para dez disponíveis e liberou uma nova seleção.
+- A inspeção do console durante o cenário não encontrou avisos ou erros de hidratação. A API curta foi removida, a API padrão voltou saudável e o teste direcionado confirmou novamente o TTL padrão de 900 segundos.
+- Testes unitários do contador cobriram o prazo absoluto, o instante exato da expiração e a formatação de 15:00, 00:05 e 00:00; a suíte frontend passou com seis testes.

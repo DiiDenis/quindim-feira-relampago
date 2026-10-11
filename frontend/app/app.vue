@@ -7,6 +7,10 @@ import type {
 } from '~/types/api'
 import { formatarCentavos } from '~/utils/moeda'
 import { construirItensReserva } from '~/utils/reserva'
+import {
+  calcularSegundosRestantes,
+  formatarDuracao,
+} from '~/utils/tempo-reserva'
 
 const titulo = 'Feira Relâmpago'
 
@@ -23,18 +27,51 @@ const clienteId = ref('cli_demo')
 const quantidades = reactive<Record<string, number>>({})
 const reserva = ref<Reserva | null>(null)
 const enviandoReserva = ref(false)
+const consultandoReserva = ref(false)
 const mensagemErro = ref('')
+const instanteAtualMs = ref<number | null>(null)
+let paginaMontada = false
+let intervaloContador: ReturnType<typeof setInterval> | undefined
 
 const itensSelecionados = computed(() => construirItensReserva(
   livros.value,
   quantidades,
 ))
 
+const selecaoLiberada = computed(() => (
+  reserva.value === null || reserva.value.status === 'expirada'
+))
+
 const podeReservar = computed(() => (
-  clienteId.value.trim().length > 0
+  selecaoLiberada.value
+  && clienteId.value.trim().length > 0
   && itensSelecionados.value.length > 0
   && !enviandoReserva.value
 ))
+
+const segundosRestantes = computed(() => {
+  if (
+    reserva.value?.status !== 'ativa'
+    || instanteAtualMs.value === null
+  ) {
+    return null
+  }
+
+  return calcularSegundosRestantes(
+    reserva.value.expira_em,
+    instanteAtualMs.value,
+  )
+})
+
+const contadorReserva = computed(() => {
+  if (reserva.value?.status === 'expirada') {
+    return '00:00'
+  }
+
+  return segundosRestantes.value === null
+    ? '--:--'
+    : formatarDuracao(segundosRestantes.value)
+})
 
 function maximoSelecionavel(livro: Livro): number {
   return Math.min(3, livro.disponivel)
@@ -75,6 +112,85 @@ function lerErroApi(erro: unknown): { status?: number, resposta?: RespostaErro }
 
   return { status, resposta: resposta as RespostaErro }
 }
+
+function pararContador(): void {
+  if (intervaloContador !== undefined) {
+    clearInterval(intervaloContador)
+    intervaloContador = undefined
+  }
+}
+
+async function consultarReservaAoVencer(idReserva: string): Promise<void> {
+  if (consultandoReserva.value || reserva.value?.id !== idReserva) {
+    return
+  }
+
+  pararContador()
+  consultandoReserva.value = true
+
+  try {
+    const reservaAtualizada = await $fetch<Reserva>(
+      `/api/reservas/${encodeURIComponent(idReserva)}`,
+      { retry: 0 },
+    )
+
+    if (reserva.value?.id === idReserva) {
+      reserva.value = reservaAtualizada
+      await atualizarCatalogo()
+      ajustarQuantidadesAoCatalogo()
+    }
+  }
+  catch (erro: unknown) {
+    const erroApi = lerErroApi(erro)
+    mensagemErro.value = erroApi.resposta?.erro.mensagem
+      ?? 'Não foi possível atualizar o estado da reserva.'
+  }
+  finally {
+    consultandoReserva.value = false
+  }
+}
+
+function atualizarRelogio(): void {
+  instanteAtualMs.value = Date.now()
+
+  if (segundosRestantes.value === 0 && reserva.value?.status === 'ativa') {
+    void consultarReservaAoVencer(reserva.value.id)
+  }
+}
+
+function iniciarContadorDaReserva(): void {
+  pararContador()
+  instanteAtualMs.value = null
+
+  if (!paginaMontada || reserva.value?.status !== 'ativa') {
+    return
+  }
+
+  atualizarRelogio()
+
+  if (segundosRestantes.value !== 0) {
+    intervaloContador = setInterval(atualizarRelogio, 250)
+  }
+}
+
+watch(
+  () => [
+    reserva.value?.id,
+    reserva.value?.status,
+    reserva.value?.expira_em,
+  ],
+  iniciarContadorDaReserva,
+)
+
+onMounted(() => {
+  paginaMontada = true
+  iniciarContadorDaReserva()
+})
+
+onUnmounted(() => {
+  paginaMontada = false
+  pararContador()
+})
 
 async function criarReserva(): Promise<void> {
   if (!podeReservar.value) {
@@ -186,7 +302,7 @@ async function criarReserva(): Promise<void> {
                 <UInput
                   :id="`quantidade-${livro.sku}`"
                   class="livro-card__quantidade"
-                  :disabled="livro.disponivel === 0 || enviandoReserva"
+                  :disabled="livro.disponivel === 0 || enviandoReserva || !selecaoLiberada"
                   :max="maximoSelecionavel(livro)"
                   min="0"
                   :model-value="quantidades[livro.sku] ?? 0"
@@ -210,7 +326,7 @@ async function criarReserva(): Promise<void> {
             <UInput
               v-model="clienteId"
               class="reserva-form__cliente"
-              :disabled="enviandoReserva"
+              :disabled="enviandoReserva || !selecaoLiberada"
               placeholder="cli_demo"
             />
           </UFormField>
@@ -230,18 +346,89 @@ async function criarReserva(): Promise<void> {
           class="pagina-inicial__retorno"
           color="error"
           :description="mensagemErro"
-          title="Não foi possível reservar"
+          title="A operação não pôde ser concluída"
           variant="soft"
         />
 
-        <UAlert
+        <UCard
           v-if="reserva"
-          class="pagina-inicial__retorno"
-          color="success"
-          :description="`Reserva ${reserva.id} criada para ${reserva.cliente_id}.`"
-          title="Livros reservados"
-          variant="soft"
-        />
+          class="reserva-card"
+        >
+          <template #header>
+            <div class="reserva-card__cabecalho">
+              <h2 class="reserva-card__titulo">
+                Reserva
+              </h2>
+              <UBadge
+                class="reserva-card__status"
+                :color="reserva.status === 'ativa' ? 'success' : 'neutral'"
+                variant="soft"
+              >
+                {{ reserva.status }}
+              </UBadge>
+            </div>
+          </template>
+
+          <dl class="reserva-card__dados">
+            <div class="reserva-card__dado">
+              <dt class="reserva-card__rotulo">
+                Identificador
+              </dt>
+              <dd class="reserva-card__valor">
+                {{ reserva.id }}
+              </dd>
+            </div>
+            <div class="reserva-card__dado">
+              <dt class="reserva-card__rotulo">
+                Cliente
+              </dt>
+              <dd class="reserva-card__valor">
+                {{ reserva.cliente_id }}
+              </dd>
+            </div>
+            <div class="reserva-card__dado">
+              <dt class="reserva-card__rotulo">
+                Expira em
+              </dt>
+              <dd class="reserva-card__valor">
+                <time :datetime="reserva.expira_em">
+                  {{ reserva.expira_em }}
+                </time>
+              </dd>
+            </div>
+          </dl>
+
+          <ul class="reserva-card__itens">
+            <li
+              v-for="item in reserva.itens"
+              :key="item.sku"
+              class="reserva-card__item"
+            >
+              <span class="reserva-card__item-sku">{{ item.sku }}</span>
+              <span class="reserva-card__item-quantidade">
+                {{ item.quantidade }} × {{ formatarCentavos(item.preco_centavos) }}
+              </span>
+            </li>
+          </ul>
+
+          <template #footer>
+            <div class="reserva-card__prazo">
+              <span class="reserva-card__prazo-label">Tempo restante</span>
+              <strong
+                class="reserva-card__contador"
+                aria-live="polite"
+              >
+                {{ contadorReserva }}
+              </strong>
+              <span
+                v-if="consultandoReserva"
+                class="reserva-card__consulta"
+              >
+                Verificando estado no servidor…
+              </span>
+            </div>
+          </template>
+        </UCard>
       </UContainer>
     </main>
   </UApp>
@@ -368,6 +555,91 @@ async function criarReserva(): Promise<void> {
 
   &__botao {
     justify-content: center;
+  }
+}
+
+.reserva-card {
+  border-radius: $raio-lg;
+  margin-top: $espaco-md;
+
+  &__cabecalho {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__titulo {
+    color: $cor-texto;
+    font-size: $fonte-subtitulo;
+    font-weight: 700;
+  }
+
+  &__status {
+    text-transform: capitalize;
+  }
+
+  &__dados {
+    display: grid;
+    gap: $espaco-sm;
+  }
+
+  &__dado {
+    min-width: 0;
+  }
+
+  &__rotulo {
+    color: $cor-texto-suave;
+    font-size: $fonte-pequena;
+  }
+
+  &__valor {
+    color: $cor-texto;
+    overflow-wrap: anywhere;
+  }
+
+  &__itens {
+    display: grid;
+    gap: $espaco-xs;
+    list-style: none;
+    margin-top: $espaco-md;
+    padding: 0;
+  }
+
+  &__item {
+    display: flex;
+    gap: $espaco-sm;
+    justify-content: space-between;
+  }
+
+  &__item-sku {
+    color: $cor-texto;
+    font-family: monospace;
+  }
+
+  &__item-quantidade {
+    color: $cor-texto-suave;
+  }
+
+  &__prazo {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: $espaco-sm;
+  }
+
+  &__prazo-label {
+    color: $cor-texto-suave;
+  }
+
+  &__contador {
+    color: $cor-destaque;
+    font-size: $fonte-preco;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__consulta {
+    color: $cor-texto-suave;
+    font-size: $fonte-pequena;
   }
 }
 </style>
