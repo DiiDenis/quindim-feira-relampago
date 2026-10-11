@@ -132,3 +132,6 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - `POST /v1/webhooks/pagamento` passou a autenticar o corpo bruto antes de interpretar JSON ou acessar o agregado, e aplica eventos válidos pelo mesmo CAS de reservas e pedidos.
 - Um teste com reserva vencida confirmou que assinatura ausente ou inválida responde 401 sem alterar versão, status ou estoque; pago, recusado, duplicado, terminal e pedido inexistente respondem `recebido` conforme o contrato.
 - A API foi reconstruída com os quatro workers para os testes HTTP; a suíte completa passou com 197 testes e a checagem de formato compactou uma asserção antes da verificação final.
+- O contrato HTTP completo do webhook foi exercitado com HMAC calculado independentemente pela biblioteca padrão, incluindo o vetor fixo do PDF, JSON malformado, data sem fuso e IDs de pedido válidos ou malformados.
+- Reentregas, payload conflitante com o mesmo `evento_id` e eventos fora de ordem preservaram estado terminal e `pago_em`; após recusa, uma nova reserva consumiu de fato a unidade devolvida.
+- Confirmações repetidas depois de pagamento ou cancelamento devolveram o mesmo pedido atual sem criar outro; a suíte completa passou com 204 testes, e o Ruff pediu uma linha em branco no bloco de imports antes da verificação final.
