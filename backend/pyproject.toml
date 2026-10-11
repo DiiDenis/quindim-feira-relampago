@@ -16,6 +16,9 @@ dev = [
     "pytest>=8,<10",
     "ruff>=0.11,<1",
 ]
+navegador = [
+    "playwright>=1.55,<2",
+]
 
 [tool.uv]
 package = false
@@ -26,6 +29,7 @@ pythonpath = ["."]
 addopts = ["--strict-markers"]
 markers = [
     "integracao: testes que dependem de serviços reais",
+    "navegador: testes executados em um navegador Chromium real",
     "negocio: cenários de integração que começam com reset administrativo",
 ]
 

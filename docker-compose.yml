@@ -78,5 +78,27 @@ services:
         condition: service_healthy
     command: ["python", "-m", "pytest", "tests/unitarios", "tests/integracao", "-v"]
 
+  testes-navegador:
+    profiles:
+      - navegador
+    pull_policy: build
+    build:
+      context: ./backend
+      target: testes-navegador
+    env_file:
+      - .env
+    environment:
+      API_URL: http://api:8000
+      FRONTEND_URL: http://frontend:3000
+      MONGO_URI: mongodb://mongo:27017
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    command: ["python", "-m", "pytest", "tests/navegador", "-v"]
+
 volumes:
   mongo_dados:
