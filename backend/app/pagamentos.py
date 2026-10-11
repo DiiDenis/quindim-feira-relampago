@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import re
+from collections import Counter
 from datetime import UTC, datetime
 from typing import Any, Literal
 
@@ -56,3 +57,51 @@ def assinatura_valida(corpo: bytes, assinatura: str | None, segredo: str) -> boo
         return False
     esperada = calcular_assinatura(corpo, segredo)
     return hmac.compare_digest(assinatura.lower(), esperada)
+
+
+def processar_evento_pagamento(
+    estado: dict[str, Any],
+    evento: EventoPagamentoEntrada,
+) -> bool:
+    """Consome um evento uma vez e aplica somente uma transição válida."""
+    if any(item["evento_id"] == evento.evento_id for item in estado["eventos"]):
+        return False
+
+    pedido = next(
+        (item for item in estado["pedidos"] if item["id"] == evento.pedido_id),
+        None,
+    )
+    if pedido is not None and pedido["status"] not in {
+        "aguardando_pagamento",
+        "pago",
+        "cancelado",
+    }:
+        raise RuntimeError("Pedido com status interno desconhecido.")
+
+    livros_por_sku = {livro["sku"]: livro for livro in estado["livros"]}
+    devolucoes: Counter[str] = Counter()
+    if (
+        pedido is not None
+        and pedido["status"] == "aguardando_pagamento"
+        and evento.tipo == "recusado"
+    ):
+        for linha in pedido["linhas"]:
+            devolucoes[linha["sku"]] += linha["quantidade"]
+        for sku, quantidade in devolucoes.items():
+            livro = livros_por_sku.get(sku)
+            if livro is None or livro["disponivel"] + quantidade > livro["estoque"]:
+                raise RuntimeError("Pedido viola a capacidade interna do estoque.")
+
+    estado["eventos"].append(evento.model_dump())
+    if pedido is None or pedido["status"] in {"pago", "cancelado"}:
+        return True
+
+    if evento.tipo == "pago":
+        pedido["status"] = "pago"
+        pedido["pago_em"] = evento.ocorrido_em
+        return True
+
+    pedido["status"] = "cancelado"
+    for sku, quantidade in devolucoes.items():
+        livros_por_sku[sku]["disponivel"] += quantidade
+    return True

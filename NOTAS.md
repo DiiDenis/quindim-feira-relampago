@@ -126,3 +126,6 @@ As decisões abaixo são propostas nossas e deverão ser confirmadas por testes;
 - A checagem de formato pediu a compactação da equação de invariante; o Ruff aplicou o ajuste antes da verificação final.
 - A entrada de webhook passou a aceitar somente IDs não vazios, tipos pago/recusado e data com fuso normalizada para UTC, sem tratar `pedido_id` como ID de rota.
 - O HMAC-SHA256 dos bytes originais foi conferido com o vetor fixo de 114 bytes do PDF; JSON equivalente com espaços exigiu outra assinatura, e a suíte completa passou com 181 testes.
+- Eventos de pagamento passaram a ser consumidos globalmente pelo `evento_id`; pedidos aguardando mudam para pago ou cancelado, enquanto estados finais não são reabertos.
+- A recusa devolve as unidades uma única vez no mesmo estado que registra o evento e cancela o pedido; pedido inexistente e eventos sem efeito também permanecem registrados para deduplicação.
+- A primeira checagem de estilo pediu a união de duas condições e a de formato compactou duas expressões; após os ajustes, a suíte completa passou com 191 testes.
